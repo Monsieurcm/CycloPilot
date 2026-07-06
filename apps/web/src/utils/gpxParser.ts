@@ -1,4 +1,4 @@
-import type { GPXPoint } from "@cyclopilot/shared";
+import { applyRouteGradients, type GPXPoint } from "@cyclopilot/shared";
 import type { RouteParser } from "./routeParser";
 
 function readFileAsText(file: File): Promise<string> {
@@ -127,7 +127,7 @@ export class GPXRouteParser implements RouteParser {
       });
     }
 
-    return points;
+    return applyRouteGradients(points);
   }
 }
 

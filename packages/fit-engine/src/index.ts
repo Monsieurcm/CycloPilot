@@ -1,4 +1,4 @@
-import type { GPXPoint } from "@cyclopilot/shared";
+import { applyRouteGradients, type GPXPoint } from "@cyclopilot/shared";
 import { fit2json, parseRecords } from "fit-decoder";
 
 interface ParsedFITRecord {
@@ -145,5 +145,5 @@ export function parseFITRoute(input: ArrayBuffer | Uint8Array): GPXPoint[] {
     throw new Error("No GPS positions found in FIT file");
   }
 
-  return route;
+  return applyRouteGradients(route);
 }

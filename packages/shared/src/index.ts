@@ -40,6 +40,7 @@ export interface GPXPoint {
   elevation: number;
   timestamp?: string;
   distance?: number; // Distance from start (meters)
+  gradient?: number; // Segment gradient in percentage
 }
 
 export interface GPXSegment {
@@ -90,3 +91,5 @@ export interface FITMetadata {
   validFieldBits: number;
   localMessageType: number;
 }
+
+export { applyRouteGradients } from "./routeGradient.js";
