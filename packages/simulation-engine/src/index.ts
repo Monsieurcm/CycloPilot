@@ -18,6 +18,14 @@ interface SimulationState {
   currentIndex: number;
 }
 
+export type SimulationPowerMode = "auto" | "fit" | "user" | "hybrid";
+export type SimulationPowerSource = "fit" | "user" | "none";
+
+interface ResolvedPower {
+  power: number;
+  source: SimulationPowerSource;
+}
+
 type MetricsListener = (metrics: RideMetrics) => void;
 type StateListener = (state: Readonly<SimulationState>) => void;
 
@@ -114,6 +122,9 @@ function calculateEstimatedArrivalDate(remainingSeconds: number): Date {
 export class SimulationEngine {
   private readonly config: SimulationConfig;
   private riderProfile: RiderPhysicsProfile;
+  private powerMode: SimulationPowerMode = "auto";
+  private hasRecordedRoutePower = false;
+  private activePowerSource: SimulationPowerSource = "none";
 
   private route: GPXPoint[] = [];
 
@@ -141,6 +152,78 @@ export class SimulationEngine {
 
   resetRiderProfile(): void {
     this.riderProfile = buildRiderPhysicsProfile(this.config);
+  }
+
+  getPowerMode(): SimulationPowerMode {
+    return this.powerMode;
+  }
+
+  setPowerMode(mode: SimulationPowerMode): void {
+    this.powerMode = mode;
+  }
+
+  hasRecordedPower(): boolean {
+    return this.hasRecordedRoutePower;
+  }
+
+  getActivePowerSource(): SimulationPowerSource {
+    return this.activePowerSource;
+  }
+
+  private getCurrentRecordedPower(): number | null {
+    const point = this.getCurrentPoint();
+    const pointPower = point?.power;
+
+    if (typeof pointPower === "number" && Number.isFinite(pointPower) && pointPower >= 0) {
+      return pointPower;
+    }
+
+    return null;
+  }
+
+  private resolvePower(userPower: number): ResolvedPower {
+    const normalizedUserPower = Number.isFinite(userPower) && userPower > 0
+      ? userPower
+      : 0;
+    const fitPower = this.getCurrentRecordedPower();
+
+    if (this.powerMode === "fit") {
+      if (fitPower !== null && fitPower > 0) {
+        return { power: fitPower, source: "fit" };
+      }
+
+      return { power: 0, source: "none" };
+    }
+
+    if (this.powerMode === "user") {
+      if (normalizedUserPower > 0) {
+        return { power: normalizedUserPower, source: "user" };
+      }
+
+      return { power: 0, source: "none" };
+    }
+
+    if (this.powerMode === "hybrid") {
+      if (fitPower !== null && fitPower > 0) {
+        return { power: fitPower, source: "fit" };
+      }
+
+      if (normalizedUserPower > 0) {
+        return { power: normalizedUserPower, source: "user" };
+      }
+
+      return { power: 0, source: "none" };
+    }
+
+    if (fitPower !== null && fitPower > 0) {
+      return { power: fitPower, source: "fit" };
+    }
+
+    if (normalizedUserPower > 0) {
+      return { power: normalizedUserPower, source: "user" };
+    }
+
+    return { power: 0, source: "none" };
   }
 
   // -----------------------------------------------------------------------
@@ -182,6 +265,10 @@ export class SimulationEngine {
    */
   loadRoute(points: GPXPoint[]): void {
     this.route = [...points];
+    this.hasRecordedRoutePower = this.route.some((point) =>
+      typeof point.power === "number" && Number.isFinite(point.power) && point.power >= 0
+    );
+    this.activePowerSource = "none";
     this.state.currentIndex = DEFAULT_STATE.currentIndex;
     this.state.elapsedTime = DEFAULT_STATE.elapsedTime;
     this.indexStepAccumulator = 0;
@@ -298,15 +385,17 @@ export class SimulationEngine {
       : currentPoint
         ? calculateGradePercent({ currentPoint, nextPoint })
         : 0;
-    const targetSpeedMs = userPower > 0
-      ? estimateSpeedFromPower(userPower, gradePercent, this.riderProfile)
+    const resolvedPower = this.resolvePower(userPower);
+    const targetSpeedMs = resolvedPower.power > 0
+      ? estimateSpeedFromPower(resolvedPower.power, gradePercent, this.riderProfile)
       : this.state.speed / 3.6;
     const effectiveSpeedMs = Math.min(targetSpeedMs, getMaxSafeSpeedKmh() / 3.6);
     const effectiveSpeedKmh = effectiveSpeedMs * 3.6;
 
-    this.state.speed = userPower > 0 ? effectiveSpeedKmh : this.state.speed;
-    this.metrics.speed = userPower > 0 ? effectiveSpeedKmh : this.state.speed;
-    this.metrics.power = userPower > 0 ? userPower : 0;
+    this.activePowerSource = resolvedPower.source;
+    this.state.speed = resolvedPower.power > 0 ? effectiveSpeedKmh : this.state.speed;
+    this.metrics.speed = resolvedPower.power > 0 ? effectiveSpeedKmh : this.state.speed;
+    this.metrics.power = resolvedPower.power;
 
     this.state.elapsedTime += deltaTime * this.state.speed;
 
@@ -350,6 +439,7 @@ export class SimulationEngine {
     this.state.elapsedTime = DEFAULT_STATE.elapsedTime;
     this.state.currentIndex = DEFAULT_STATE.currentIndex;
     this.indexStepAccumulator = 0;
+    this.activePowerSource = "none";
 
     this.emitMetrics();
     this.emitState();
