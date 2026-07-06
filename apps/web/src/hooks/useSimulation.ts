@@ -56,6 +56,8 @@ export interface UseSimulationResult {
 
   speed: number;
 
+  power: number;
+
   elapsedTime: number;
 
   progress: number;
@@ -88,6 +90,8 @@ export interface UseSimulationResult {
 
   setSpeed(speed: number): void;
 
+  setPower(power: number): void;
+
   loadRoute(points: GPXPoint[]): void;
 }
 
@@ -108,6 +112,9 @@ export function useSimulation(
 
   const [speed, setPlaybackSpeed] =
     useState(engine.getSpeed());
+
+  const [power, setSimulationPower] =
+    useState(0);
 
   const [elapsedTime, setElapsedTime] =
     useState(engine.getElapsedTime());
@@ -185,13 +192,13 @@ export function useSimulation(
     }
 
     const timer = window.setInterval(() => {
-      engine.step(0.25, 0);
+      engine.step(0.25, power);
     }, 250);
 
     return () => {
       window.clearInterval(timer);
     };
-  }, [engine, playing]);
+  }, [engine, playing, power]);
 
   const play = useCallback(
     () => engine.play(),
@@ -233,6 +240,11 @@ export function useSimulation(
     [engine]
   );
 
+  const setPower = useCallback(
+    (powerValue: number) => setSimulationPower(Math.max(0, powerValue)),
+    []
+  );
+
   const loadRoute = useCallback(
     (points: GPXPoint[]) => {
       engine.loadRoute(points);
@@ -252,6 +264,8 @@ export function useSimulation(
     playing,
 
     speed,
+
+    power,
 
     elapsedTime,
 
@@ -284,6 +298,8 @@ export function useSimulation(
     previous,
 
     setSpeed,
+
+    setPower,
 
     loadRoute,
 

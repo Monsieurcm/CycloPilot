@@ -57,6 +57,7 @@ export default function HomePage() {
     metrics,
     playing,
     speed,
+    power,
     elapsedTime,
     progress,
     currentPoint,
@@ -72,6 +73,7 @@ export default function HomePage() {
     next,
     previous,
     setSpeed,
+    setPower,
     loadRoute,
   } = useSimulation();
 
@@ -96,6 +98,7 @@ export default function HomePage() {
   const canStop = hasRoute && !isImporting && (playing || progress > 0);
   const canNavigate = hasRoute && !isImporting;
   const canChangeSpeed = hasRoute && !isImporting;
+  const canChangePower = hasRoute && !isImporting;
 
   return (
     <main
@@ -150,18 +153,21 @@ export default function HomePage() {
         <SimulationControls
           playing={playing}
           speed={speed}
+          power={power}
           canPlay={canPlay}
           canPause={canPause}
           canStop={canStop}
           canPrevious={canNavigate}
           canNext={canNavigate}
           canChangeSpeed={canChangeSpeed}
+          canChangePower={canChangePower}
           onPlay={play}
           onPause={pause}
           onStop={stop}
           onPrevious={previous}
           onNext={next}
           onSpeedChange={setSpeed}
+          onPowerChange={setPower}
         />
 
         <div

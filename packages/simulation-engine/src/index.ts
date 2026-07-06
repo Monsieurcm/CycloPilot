@@ -284,6 +284,7 @@ export class SimulationEngine {
     const effectiveSpeedKmh = effectiveSpeedMs * 3.6;
 
     this.state.speed = userPower > 0 ? effectiveSpeedKmh : this.state.speed;
+    this.metrics.power = userPower > 0 ? userPower : 0;
 
     this.state.elapsedTime += deltaTime * this.state.speed;
 
