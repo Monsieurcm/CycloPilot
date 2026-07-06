@@ -25,6 +25,81 @@ const DEFAULT_STATE: SimulationState = {
   currentIndex: 0,
 };
 
+function clampSimulationSpeed(speed: number): number {
+  return Math.min(8, Math.max(0.5, speed));
+}
+
+function calculateProgress(routeLength: number, currentIndex: number): number {
+  if (routeLength <= 1) {
+    return 0;
+  }
+
+  return currentIndex / (routeLength - 1);
+}
+
+function calculateAverageSpeed(distanceMeters: number, elapsedSeconds: number): number {
+  if (elapsedSeconds <= 0) {
+    return 0;
+  }
+
+  const distanceKm = distanceMeters / 1000;
+  const timeHours = elapsedSeconds / 3600;
+
+  return timeHours > 0 ? distanceKm / timeHours : 0;
+}
+
+function calculateRemainingDistance(route: GPXPoint[], currentDistance: number): number {
+  if (route.length === 0) {
+    return 0;
+  }
+
+  const lastPoint = route[route.length - 1];
+  const totalDistance = lastPoint?.distance ?? 0;
+
+  return Math.max(0, totalDistance - currentDistance);
+}
+
+function calculateRemainingElevation(route: GPXPoint[], currentIndex: number): number {
+  if (route.length === 0 || currentIndex >= route.length) {
+    return 0;
+  }
+
+  let elevationGain = 0;
+  for (let i = currentIndex; i < route.length - 1; i++) {
+    const nextElevation = route[i + 1].elevation ?? 0;
+    const currentElevation = route[i].elevation ?? 0;
+    const gain = nextElevation - currentElevation;
+
+    if (gain > 0) {
+      elevationGain += gain;
+    }
+  }
+
+  return Math.max(0, elevationGain);
+}
+
+function calculateRemainingTimeSeconds(speedKmh: number, remainingDistanceMeters: number): number {
+  if (speedKmh <= 0) {
+    return Infinity;
+  }
+
+  const currentSpeedMs = speedKmh / 3.6;
+
+  if (currentSpeedMs <= 0) {
+    return Infinity;
+  }
+
+  return remainingDistanceMeters / currentSpeedMs;
+}
+
+function calculateEstimatedArrivalDate(remainingSeconds: number): Date {
+  if (!isFinite(remainingSeconds)) {
+    return new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+  }
+
+  return new Date(Date.now() + remainingSeconds * 1000);
+}
+
 export class SimulationEngine {
   private readonly config: SimulationConfig;
 
@@ -124,7 +199,7 @@ export class SimulationEngine {
   }
 
   setSpeed(speed: number): void {
-    this.state.speed = Math.min(8, Math.max(0.5, speed));
+    this.state.speed = clampSimulationSpeed(speed);
     this.emitState();
   }
 
@@ -141,11 +216,7 @@ export class SimulationEngine {
   }
 
   getProgress(): number {
-    if (this.route.length <= 1) {
-      return 0;
-    }
-
-    return this.state.currentIndex / (this.route.length - 1);
+    return calculateProgress(this.route.length, this.state.currentIndex);
   }
 
   getCurrentPoint(): GPXPoint | null {
@@ -246,15 +317,7 @@ export class SimulationEngine {
    * Get the average speed in km/h
    */
   getAverageSpeed(): number {
-    if (this.state.elapsedTime <= 0) {
-      return 0;
-    }
-
-    // Distance in meters, time in seconds → convert to km/h
-    const distanceKm = (this.metrics.distance ?? 0) / 1000;
-    const timeHours = this.state.elapsedTime / 3600;
-
-    return timeHours > 0 ? distanceKm / timeHours : 0;
+    return calculateAverageSpeed(this.metrics.distance ?? 0, this.state.elapsedTime);
   }
 
   /**
@@ -269,45 +332,14 @@ export class SimulationEngine {
    * Get the remaining distance in meters
    */
   getRemainingDistance(): number {
-    if (this.route.length === 0) {
-      return 0;
-    }
-
-    const lastPoint = this.route[this.route.length - 1];
-    const totalDistance = lastPoint?.distance ?? 0;
-    const currentDistance = this.metrics.distance ?? 0;
-
-    return Math.max(0, totalDistance - currentDistance);
+    return calculateRemainingDistance(this.route, this.metrics.distance ?? 0);
   }
 
   /**
    * Get the remaining elevation gain in meters
    */
   getRemainingElevation(): number {
-    if (this.route.length === 0 || this.state.currentIndex >= this.route.length) {
-      return 0;
-    }
-
-    const currentPoint = this.getCurrentPoint();
-    const lastPoint = this.route[this.route.length - 1];
-
-    if (!currentPoint || !lastPoint) {
-      return 0;
-    }
-
-    // Calculate elevation gain from current point to end
-    let elevationGain = 0;
-    for (let i = this.state.currentIndex; i < this.route.length - 1; i++) {
-      const nextElevation = this.route[i + 1].elevation ?? 0;
-      const currentElevation = this.route[i].elevation ?? 0;
-      const gain = nextElevation - currentElevation;
-
-      if (gain > 0) {
-        elevationGain += gain;
-      }
-    }
-
-    return Math.max(0, elevationGain);
+    return calculateRemainingElevation(this.route, this.state.currentIndex);
   }
 
   /**
@@ -315,18 +347,8 @@ export class SimulationEngine {
    * Returns Infinity if speed is zero
    */
   getRemainingTime(): number {
-    if (this.metrics.speed <= 0) {
-      return Infinity;
-    }
-
     const remainingDistanceM = this.getRemainingDistance();
-    const currentSpeedMs = (this.metrics.speed ?? 0) / 3.6; // km/h → m/s
-
-    if (currentSpeedMs <= 0) {
-      return Infinity;
-    }
-
-    return remainingDistanceM / currentSpeedMs;
+    return calculateRemainingTimeSeconds(this.metrics.speed ?? 0, remainingDistanceM);
   }
 
   /**
@@ -334,12 +356,7 @@ export class SimulationEngine {
    */
   getEstimatedArrival(): Date {
     const remainingSeconds = this.getRemainingTime();
-
-    if (!isFinite(remainingSeconds)) {
-      return new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year from now
-    }
-
-    return new Date(Date.now() + remainingSeconds * 1000);
+    return calculateEstimatedArrivalDate(remainingSeconds);
   }
 
   private refreshMetrics(): void {
