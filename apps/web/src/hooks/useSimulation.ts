@@ -12,6 +12,8 @@ import type {
   GPXTrack,
 } from "@cyclopilot/shared";
 
+export type RiderProfile = ReturnType<SimulationEngine["getRiderProfile"]>;
+
 const DEFAULT_BIKE_PROFILE: BikeProfile = {
   id: "road-bike",
   name: "Road Bike",
@@ -58,6 +60,8 @@ export interface UseSimulationResult {
 
   power: number;
 
+  riderProfile: RiderProfile;
+
   elapsedTime: number;
 
   progress: number;
@@ -92,6 +96,10 @@ export interface UseSimulationResult {
 
   setPower(power: number): void;
 
+  updateRiderProfile(profile: Partial<RiderProfile>): void;
+
+  resetRiderProfile(): void;
+
   loadRoute(points: GPXPoint[]): void;
 }
 
@@ -115,6 +123,9 @@ export function useSimulation(
 
   const [power, setSimulationPower] =
     useState(0);
+
+  const [riderProfile, setRiderProfileState] =
+    useState<RiderProfile>(engine.getRiderProfile());
 
   const [elapsedTime, setElapsedTime] =
     useState(engine.getElapsedTime());
@@ -160,6 +171,7 @@ export function useSimulation(
     setRemainingElevation(engine.getRemainingElevation());
     setRemainingTime(engine.getRemainingTime());
     setEstimatedArrival(engine.getEstimatedArrival());
+    setRiderProfileState(engine.getRiderProfile());
   }, [engine]);
 
   useEffect(() => {
@@ -245,6 +257,22 @@ export function useSimulation(
     []
   );
 
+  const updateRiderProfile = useCallback(
+    (profile: Partial<RiderProfile>) => {
+      engine.setRiderProfile(profile);
+      setRiderProfileState(engine.getRiderProfile());
+    },
+    [engine]
+  );
+
+  const resetRiderProfile = useCallback(
+    () => {
+      engine.resetRiderProfile();
+      setRiderProfileState(engine.getRiderProfile());
+    },
+    [engine]
+  );
+
   const loadRoute = useCallback(
     (points: GPXPoint[]) => {
       engine.loadRoute(points);
@@ -266,6 +294,8 @@ export function useSimulation(
     speed,
 
     power,
+
+    riderProfile,
 
     elapsedTime,
 
@@ -300,6 +330,10 @@ export function useSimulation(
     setSpeed,
 
     setPower,
+
+    updateRiderProfile,
+
+    resetRiderProfile,
 
     loadRoute,
 

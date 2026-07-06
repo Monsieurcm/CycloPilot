@@ -7,6 +7,7 @@ import { RouteInfo } from "../src/components/RouteInfo";
 import { SimulationControls } from "../src/components/SimulationControls";
 import { GPXUploader } from "../src/components/GPXUploader";
 import { DashboardAdvanced } from "../src/components/DashboardAdvanced";
+import { RiderProfilePanel } from "../src/components/RiderProfilePanel";
 import { useSimulation } from "../src/hooks/useSimulation";
 
 type AppSimulationState =
@@ -104,6 +105,7 @@ export default function HomePage() {
     playing,
     speed,
     power,
+    riderProfile,
     elapsedTime,
     progress,
     currentPoint,
@@ -119,6 +121,8 @@ export default function HomePage() {
     previous,
     setSpeed,
     setPower,
+    updateRiderProfile,
+    resetRiderProfile,
     loadRoute,
   } = useSimulation();
 
@@ -216,6 +220,13 @@ export default function HomePage() {
           onNext={next}
           onSpeedChange={setSpeed}
           onPowerChange={setPower}
+        />
+
+        <RiderProfilePanel
+          profile={riderProfile}
+          disabled={!hasRoute || isImporting}
+          onChange={updateRiderProfile}
+          onReset={resetRiderProfile}
         />
 
         <div
