@@ -1,4 +1,10 @@
 import { RideMetrics, SimulationConfig, GPXPoint } from "@cyclopilot/shared";
+import {
+  createDefaultPhysicsProfile,
+  calculateGradePercent,
+  estimateSpeedFromPower,
+  type PhysicsProfile,
+} from "./physics";
 
 interface SimulationState {
   playing: boolean;
@@ -102,6 +108,7 @@ function calculateEstimatedArrivalDate(remainingSeconds: number): Date {
 
 export class SimulationEngine {
   private readonly config: SimulationConfig;
+  private readonly physicsProfile: PhysicsProfile;
 
   private route: GPXPoint[] = [];
 
@@ -116,6 +123,7 @@ export class SimulationEngine {
 
   constructor(config: SimulationConfig) {
     this.config = config;
+    this.physicsProfile = createDefaultPhysicsProfile(config);
   }
 
   // -----------------------------------------------------------------------
@@ -255,7 +263,7 @@ export class SimulationEngine {
     this.seek(this.state.currentIndex - 1);
   }
 
-  step(deltaTime: number, _userPower: number): RideMetrics {
+  step(deltaTime: number, userPower: number): RideMetrics {
     if (!this.state.playing) {
       return this.getMetrics();
     }
@@ -265,6 +273,17 @@ export class SimulationEngine {
       this.emitState();
       return this.getMetrics();
     }
+
+    const currentPoint = this.getCurrentPoint();
+    const nextPoint = this.route[this.state.currentIndex + 1];
+    const gradePercent = currentPoint ? calculateGradePercent({ currentPoint, nextPoint }) : 0;
+    const targetSpeedMs = userPower > 0
+      ? estimateSpeedFromPower(userPower, gradePercent, this.physicsProfile)
+      : this.state.speed / 3.6;
+    const effectiveSpeedMs = userPower > 0 ? targetSpeedMs : this.state.speed / 3.6;
+    const effectiveSpeedKmh = effectiveSpeedMs * 3.6;
+
+    this.state.speed = userPower > 0 ? effectiveSpeedKmh : this.state.speed;
 
     this.state.elapsedTime += deltaTime * this.state.speed;
 
