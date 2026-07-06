@@ -1,5 +1,9 @@
 import { RideMetrics, SimulationConfig, GPXPoint } from "@cyclopilot/shared";
 import {
+  applyRiderPhysicsOverrides,
+  buildRiderPhysicsProfile,
+  type RiderPhysicsProfile,
+  type RiderPhysicsProfileOverrides,
   createDefaultPhysicsProfile,
   calculateGradePercent,
   getMaxSafeSpeedKmh,
@@ -109,7 +113,7 @@ function calculateEstimatedArrivalDate(remainingSeconds: number): Date {
 
 export class SimulationEngine {
   private readonly config: SimulationConfig;
-  private readonly physicsProfile: PhysicsProfile;
+  private riderProfile: RiderPhysicsProfile;
 
   private route: GPXPoint[] = [];
 
@@ -124,7 +128,19 @@ export class SimulationEngine {
 
   constructor(config: SimulationConfig) {
     this.config = config;
-    this.physicsProfile = createDefaultPhysicsProfile(config);
+    this.riderProfile = createDefaultPhysicsProfile(config);
+  }
+
+  getRiderProfile(): RiderPhysicsProfile {
+    return { ...this.riderProfile };
+  }
+
+  setRiderProfile(overrides: RiderPhysicsProfileOverrides): void {
+    this.riderProfile = applyRiderPhysicsOverrides(this.riderProfile, overrides);
+  }
+
+  resetRiderProfile(): void {
+    this.riderProfile = buildRiderPhysicsProfile(this.config);
   }
 
   // -----------------------------------------------------------------------
@@ -283,7 +299,7 @@ export class SimulationEngine {
         ? calculateGradePercent({ currentPoint, nextPoint })
         : 0;
     const targetSpeedMs = userPower > 0
-      ? estimateSpeedFromPower(userPower, gradePercent, this.physicsProfile)
+      ? estimateSpeedFromPower(userPower, gradePercent, this.riderProfile)
       : this.state.speed / 3.6;
     const effectiveSpeedMs = Math.min(targetSpeedMs, getMaxSafeSpeedKmh() / 3.6);
     const effectiveSpeedKmh = effectiveSpeedMs * 3.6;
