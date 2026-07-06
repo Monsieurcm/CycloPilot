@@ -1,5 +1,30 @@
 import type { GPXPoint } from "@cyclopilot/shared";
 
+function readFileAsText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== "string") {
+        reject(new Error("Unable to read GPX file content"));
+        return;
+      }
+      resolve(result);
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Unable to read GPX file"));
+    };
+
+    reader.onabort = () => {
+      reject(new Error("GPX file reading was aborted"));
+    };
+
+    reader.readAsText(file);
+  });
+}
+
 /**
  * Calculate the haversine distance in meters between two geographic points
  */
@@ -28,11 +53,16 @@ function haversineDistance(
  * Parse a GPX file and extract track points
  */
 export async function parseGPX(file: File): Promise<GPXPoint[]> {
-  const content = await file.text();
+  const content = await readFileAsText(file);
 
   // Parse XML
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(content, "application/xml");
+  let doc: Document;
+  try {
+    const parser = new DOMParser();
+    doc = parser.parseFromString(content, "application/xml");
+  } catch {
+    throw new Error("Invalid GPX file: XML parsing failed");
+  }
 
   // Check for parsing errors
   if (doc.getElementsByTagName("parsererror").length > 0) {
@@ -43,7 +73,7 @@ export async function parseGPX(file: File): Promise<GPXPoint[]> {
   const trkpts = Array.from(doc.getElementsByTagName("trkpt"));
 
   if (trkpts.length === 0) {
-    throw new Error("No track points found in GPX file");
+    throw new Error("No track points found in GPX file (<trkpt>)");
   }
 
   const points: GPXPoint[] = [];

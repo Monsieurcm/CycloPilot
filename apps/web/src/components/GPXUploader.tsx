@@ -17,7 +17,18 @@ export function GPXUploader({ onRouteLoaded }: GPXUploaderProps) {
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      setError("No file selected.");
+      setFileName(null);
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith(".gpx")) {
+      setError("Invalid file type. Please select a .gpx file.");
+      setFileName(null);
+      event.target.value = "";
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -29,7 +40,7 @@ export function GPXUploader({ onRouteLoaded }: GPXUploaderProps) {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Unknown error";
-      setError(`Failed to parse GPX: ${errorMessage}`);
+      setError(`Import failed: ${errorMessage}`);
       setFileName(null);
     } finally {
       setLoading(false);
