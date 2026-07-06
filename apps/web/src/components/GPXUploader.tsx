@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { GPXPoint } from "@cyclopilot/shared";
-import { parseGPX } from "../utils/gpxParser";
+import { loadRoute } from "../utils/routeLoader";
 
 interface GPXUploaderProps {
   onRouteLoaded(route: GPXPoint[]): void;
@@ -39,7 +39,7 @@ export function GPXUploader({ onRouteLoaded, onLoadingChange }: GPXUploaderProps
     setFileName(file.name);
 
     try {
-      const route = await parseGPX(file);
+      const route = await loadRoute(file);
       onRouteLoaded(route);
     } catch (err) {
       const errorMessage =
