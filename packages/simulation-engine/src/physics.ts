@@ -1,15 +1,26 @@
 import type { GPXPoint, SimulationConfig } from "@cyclopilot/shared";
 
-export interface PhysicsProfile {
-  riderMassKg: number;
-  bikeMassKg: number;
+export interface RiderPhysicsProfile {
+  riderWeightKg: number;
+  bikeWeightKg: number;
+  crr: number;
+  cda: number;
   frontalAreaM2: number;
-  dragCoefficient: number;
-  rollingResistanceCoefficient: number;
-  drivetrainEfficiency: number;
   airDensityKgM3: number;
   gravityMs2: number;
+  drivetrainEfficiency: number;
 }
+
+export interface RiderPhysicsProfileOverrides {
+  riderWeightKg?: number;
+  bikeWeightKg?: number;
+  crr?: number;
+  cda?: number;
+  frontalAreaM2?: number;
+  airDensityKgM3?: number;
+}
+
+export type PhysicsProfile = RiderPhysicsProfile;
 
 export interface PhysicsRouteSample {
   currentPoint: GPXPoint;
@@ -25,26 +36,59 @@ export interface PhysicsPowerContext {
 const MAX_SAFE_SPEED_KMH = 70;
 const MAX_SAFE_SPEED_MS = MAX_SAFE_SPEED_KMH / 3.6;
 
-const DEFAULT_PROFILE: PhysicsProfile = {
-  riderMassKg: 75,
-  bikeMassKg: 8,
+export const DEFAULT_RIDER_PHYSICS_PROFILE: RiderPhysicsProfile = {
+  riderWeightKg: 75,
+  bikeWeightKg: 8,
+  crr: 0.004,
+  cda: 0.29,
   frontalAreaM2: 0.33,
-  dragCoefficient: 0.88,
-  rollingResistanceCoefficient: 0.004,
-  drivetrainEfficiency: 0.97,
   airDensityKgM3: 1.225,
   gravityMs2: 9.80665,
+  drivetrainEfficiency: 0.97,
 };
+
+function clampProfile(profile: RiderPhysicsProfile): RiderPhysicsProfile {
+  return {
+    ...profile,
+    riderWeightKg: Math.max(35, profile.riderWeightKg),
+    bikeWeightKg: Math.max(4, profile.bikeWeightKg),
+    crr: Math.max(0.001, profile.crr),
+    cda: Math.max(0.1, profile.cda),
+    frontalAreaM2: Math.max(0.1, profile.frontalAreaM2),
+    airDensityKgM3: Math.max(0.7, profile.airDensityKgM3),
+  };
+}
+
+export function buildRiderPhysicsProfile(
+  config: SimulationConfig,
+  overrides: RiderPhysicsProfileOverrides = {},
+): RiderPhysicsProfile {
+  const profile: RiderPhysicsProfile = {
+    ...DEFAULT_RIDER_PHYSICS_PROFILE,
+    bikeWeightKg:
+      DEFAULT_RIDER_PHYSICS_PROFILE.bikeWeightKg * config.bikeProfile.multiplier,
+    crr:
+      DEFAULT_RIDER_PHYSICS_PROFILE.crr * config.difficulty.resistanceMultiplier,
+    ...overrides,
+  };
+
+  return clampProfile(profile);
+}
+
+export function applyRiderPhysicsOverrides(
+  profile: RiderPhysicsProfile,
+  overrides: RiderPhysicsProfileOverrides,
+): RiderPhysicsProfile {
+  return clampProfile({
+    ...profile,
+    ...overrides,
+  });
+}
 
 export function createDefaultPhysicsProfile(
   config: SimulationConfig,
 ): PhysicsProfile {
-  return {
-    ...DEFAULT_PROFILE,
-    bikeMassKg: DEFAULT_PROFILE.bikeMassKg * config.bikeProfile.multiplier,
-    rollingResistanceCoefficient:
-      DEFAULT_PROFILE.rollingResistanceCoefficient * config.difficulty.resistanceMultiplier,
-  };
+  return buildRiderPhysicsProfile(config);
 }
 
 export function calculateGradePercent(sample: PhysicsRouteSample): number {
@@ -66,23 +110,16 @@ export function calculateAirResistance(
   speedMs: number,
   profile: PhysicsProfile,
 ): number {
-  return (
-    0.5 *
-    profile.airDensityKgM3 *
-    profile.dragCoefficient *
-    profile.frontalAreaM2 *
-    speedMs *
-    speedMs
-  );
+  return 0.5 * profile.airDensityKgM3 * profile.cda * speedMs * speedMs;
 }
 
 export function calculateRollingResistance(
   profile: PhysicsProfile,
 ): number {
   return (
-    (profile.riderMassKg + profile.bikeMassKg) *
+    (profile.riderWeightKg + profile.bikeWeightKg) *
     profile.gravityMs2 *
-    profile.rollingResistanceCoefficient
+    profile.crr
   );
 }
 
@@ -92,7 +129,7 @@ export function calculateGravityResistance(
 ): number {
   const slope = gradePercent / 100;
   return (
-    (profile.riderMassKg + profile.bikeMassKg) *
+    (profile.riderWeightKg + profile.bikeWeightKg) *
     profile.gravityMs2 *
     Math.sin(Math.atan(slope))
   );
