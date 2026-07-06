@@ -41,6 +41,7 @@ export interface GPXPoint {
   timestamp?: string;
   distance?: number; // Distance from start (meters)
   gradient?: number; // Segment gradient in percentage
+  power?: number; // Recorded power in watts when available (FIT)
 }
 
 export interface GPXSegment {

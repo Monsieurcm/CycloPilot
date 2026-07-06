@@ -121,6 +121,7 @@ export function parseFITRoute(input: ArrayBuffer | Uint8Array): GPXPoint[] {
     const elevationRaw = toFiniteNumber(
       getDataField(record.data, ["enhanced_altitude", "altitude", "ele", "elevation"]),
     );
+    const powerRaw = toFiniteNumber(getDataField(record.data, ["enhanced_power", "power"]));
     const timestamp = toTimestampString(getDataField(record.data, ["timestamp", "time"]));
 
     const deviceDistance = toFiniteNumber(getDataField(record.data, ["distance"]));
@@ -138,6 +139,7 @@ export function parseFITRoute(input: ArrayBuffer | Uint8Array): GPXPoint[] {
       elevation: elevationRaw ?? 0,
       distance: Math.round(cumulativeDistance),
       timestamp,
+      power: powerRaw !== null && powerRaw >= 0 ? Math.round(powerRaw) : undefined,
     });
   }
 
