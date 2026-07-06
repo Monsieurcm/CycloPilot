@@ -1,0 +1,19 @@
+{
+  "name": "@cyclopilot/ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Shared UI components",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "echo 'UI components build'",
+    "lint": "eslint src/**/*.{ts,tsx}",
+    "typecheck": "tsc --noEmit --skipLibCheck"
+  },
+  "devDependencies": {
+    "react": "^19.1.0",
+    "typescript": "^5.8.3",
+    "@types/react": "^19.1.3"
+  }
+}

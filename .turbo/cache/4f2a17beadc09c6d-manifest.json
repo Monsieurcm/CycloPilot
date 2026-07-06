@@ -1,0 +1,36 @@
+{
+  "files": {
+    "packages/gpx-engine/dist": { "size": 0, "mtime_nanos": 0, "mode": 0, "is_dir": true },
+    "packages/gpx-engine/.turbo/turbo-build.log": {
+      "size": 92,
+      "mtime_nanos": 1783176498064445827,
+      "mode": 438,
+      "is_dir": false
+    },
+    "packages/gpx-engine/dist/index.js": {
+      "size": 497,
+      "mtime_nanos": 1783175090387369302,
+      "mode": 438,
+      "is_dir": false
+    },
+    "packages/gpx-engine/dist/index.js.map": {
+      "size": 517,
+      "mtime_nanos": 1783175090386369301,
+      "mode": 438,
+      "is_dir": false
+    },
+    "packages/gpx-engine/dist/index.d.ts": {
+      "size": 339,
+      "mtime_nanos": 1783175090397369302,
+      "mode": 438,
+      "is_dir": false
+    }
+  },
+  "order": [
+    "packages/gpx-engine/.turbo/turbo-build.log",
+    "packages/gpx-engine/dist",
+    "packages/gpx-engine/dist/index.d.ts",
+    "packages/gpx-engine/dist/index.js",
+    "packages/gpx-engine/dist/index.js.map"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^\\(lsof -iTCP -sTCP:LISTEN -P -n \\| grep -E \"3000\\|3001\\|next\\|node\" \\|\\| true\\)$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^mkdir -p exports && zip -r exports/cyclopilot-map-files\\.zip apps/web/app/page\\.tsx apps/web/src/components/MapView\\.tsx && ls -lh exports/cyclopilot-map-files\\.zip$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

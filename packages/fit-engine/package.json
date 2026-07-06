@@ -1,0 +1,21 @@
+{
+  "name": "@cyclopilot/fit-engine",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "FIT file parsing and processing",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src/**/*.ts",
+    "typecheck": "tsc --noEmit --skipLibCheck"
+  },
+  "dependencies": {
+    "@cyclopilot/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "@types/node": "^22.14.1"
+  }
+}

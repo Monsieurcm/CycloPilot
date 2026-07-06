@@ -1,0 +1,52 @@
+Audit complet effectué, avec résultats factuels.
+
+Résultats
+1. Moteur validé isolément
+- Test runtime exécuté sur la classe SimulationEngine compilée.
+- Résultat: routeLength = 6, currentIndex progresse (0 → 2 après steps), currentPoint change, distance/élévation se mettent à jour.
+- Conclusion: le moteur fonctionne sur le scénario de base.
+
+2. Hook validé au niveau chaîne de code
+- Vérifié dans apps/web/src/hooks/useSimulation.ts:
+- route et currentPoint sont bien exposés.
+- loadRoute appelle engine.loadRoute puis syncFromEngine.
+- Boucle step active quand playing = true.
+- Conclusion: le hook est câblé correctement sur le moteur.
+
+3. Interface validée au niveau wiring
+- Fichier page unique détecté: apps/web/app/page.tsx
+- page utilise bien useSimulation + RouteInfo + MapView.
+- MapView utilisé: apps/web/src/components/MapView.tsx
+- RouteInfo utilisé: apps/web/src/components/RouteInfo.tsx
+
+4. Instrumentation ajoutée pour diagnostic visuel direct
+- J’ai ajouté un panneau Debug simulation dans apps/web/app/page.tsx qui affiche à l’écran:
+- routeLength
+- playing
+- currentPoint (lat, lon ou null)
+- J’ai aussi gardé le log SIM_DEBUG dans page.
+- Build web validé après ajout: succès.
+
+Point important à interpréter correctement
+- Le log vu pendant next build:
+SIM_DEBUG {"routeLength":0,...}
+- Ce log vient du rendu statique serveur (pré-rendu), avant effets client.
+- Donc ce log seul ne prouve pas une panne de loadRoute côté client.
+
+Ce qu’il faut regarder maintenant (sans DevTools)
+1. Ouvre l’app et regarde le bloc Debug simulation affiché à l’écran.
+2. Clique Play.
+3. Donne-moi ces 3 valeurs visibles:
+- routeLength
+- currentPoint
+- playing
+
+Diagnostic immédiat selon ces valeurs
+1. routeLength = 0 et currentPoint = null
+- Rupture avant rendu (chargement route non exécuté côté client).
+
+2. routeLength = 6 et currentPoint non null, mais UI toujours “Aucun parcours chargé”
+- Rupture de rendu RouteInfo/MapView.
+
+3. routeLength = 6 et currentPoint bouge
+- Chaîne simulation OK, il restera un problème visuel carte (MapLibre/tiles/WebGL).

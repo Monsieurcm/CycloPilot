@@ -1,0 +1,17 @@
+{
+  "files": [],
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "references": [
+    { "path": "packages/shared" },
+    { "path": "packages/gpx-engine" },
+    { "path": "packages/simulation-engine" },
+    { "path": "packages/fit-engine" },
+    { "path": "packages/ui" },
+    { "path": "apps/api" }
+  ]
+}

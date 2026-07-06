@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { GPXPoint } from "@cyclopilot/shared";
+import { MapView } from "../src/components/MapView";
+import { RouteInfo } from "../src/components/RouteInfo";
 import { SimulationControls } from "../src/components/SimulationControls";
+import { GPXUploader } from "../src/components/GPXUploader";
+import { DashboardAdvanced } from "../src/components/DashboardAdvanced";
 import { useSimulation } from "../src/hooks/useSimulation";
 
 const DEMO_ROUTE: GPXPoint[] = [
@@ -15,12 +19,20 @@ const DEMO_ROUTE: GPXPoint[] = [
 ];
 
 export default function HomePage() {
+  const [route, setRoute] = useState<GPXPoint[]>(DEMO_ROUTE);
   const {
     metrics,
     playing,
     speed,
     elapsedTime,
     progress,
+    currentPoint,
+    averageSpeed,
+    maxSpeed,
+    remainingDistance,
+    remainingElevation,
+    remainingTime,
+    estimatedArrival,
     play,
     pause,
     stop,
@@ -31,8 +43,8 @@ export default function HomePage() {
   } = useSimulation();
 
   useEffect(() => {
-    loadRoute(DEMO_ROUTE);
-  }, [loadRoute]);
+    loadRoute(route);
+  }, [route, loadRoute]);
 
   return (
     <main
@@ -59,6 +71,12 @@ export default function HomePage() {
         <p style={{ marginTop: 0, opacity: 0.9 }}>
           Page reconstruite en page.tsx avec le hook useSimulation.
         </p>
+
+        <GPXUploader
+          onRouteLoaded={(newRoute) => {
+            setRoute(newRoute);
+          }}
+        />
 
         <SimulationControls
           playing={playing}
@@ -87,6 +105,27 @@ export default function HomePage() {
           <StatCard label="Elevation" value={`${metrics.elevation.toFixed(0)} m`} />
           <StatCard label="Temps" value={`${elapsedTime.toFixed(1)} s`} />
           <StatCard label="Progression" value={`${(progress * 100).toFixed(0)} %`} />
+        </div>
+
+        <DashboardAdvanced
+          averageSpeed={averageSpeed}
+          maxSpeed={maxSpeed}
+          remainingDistance={remainingDistance}
+          remainingElevation={remainingElevation}
+          remainingTime={remainingTime}
+          estimatedArrival={estimatedArrival}
+        />
+
+        <div
+          style={{
+            marginTop: "1.5rem",
+          }}
+        >
+          <RouteInfo point={currentPoint} />
+          <MapView
+            route={route}
+            currentPoint={currentPoint}
+          />
         </div>
       </section>
     </main>

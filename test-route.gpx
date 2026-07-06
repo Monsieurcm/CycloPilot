@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="CycloPilot Test">
+  <metadata>
+    <name>Test Route</name>
+    <desc>A test cycling route around Paris</desc>
+  </metadata>
+  <trk>
+    <name>Test Route</name>
+    <trkseg>
+      <trkpt lat="48.8566" lon="2.3522">
+        <ele>35</ele>
+        <time>2024-01-01T10:00:00Z</time>
+      </trkpt>
+      <trkpt lat="48.8575" lon="2.3545">
+        <ele>38</ele>
+        <time>2024-01-01T10:02:00Z</time>
+      </trkpt>
+      <trkpt lat="48.8590" lon="2.3560">
+        <ele>42</ele>
+        <time>2024-01-01T10:04:00Z</time>
+      </trkpt>
+      <trkpt lat="48.8605" lon="2.3580">
+        <ele>39</ele>
+        <time>2024-01-01T10:06:00Z</time>
+      </trkpt>
+      <trkpt lat="48.8620" lon="2.3600">
+        <ele>45</ele>
+        <time>2024-01-01T10:08:00Z</time>
+      </trkpt>
+      <trkpt lat="48.8630" lon="2.3620">
+        <ele>43</ele>
+        <time>2024-01-01T10:10:00Z</time>
+      </trkpt>
+      <trkpt lat="48.8640" lon="2.3640">
+        <ele>41</ele>
+        <time>2024-01-01T10:12:00Z</time>
+      </trkpt>
+      <trkpt lat="48.8645" lon="2.3660">
+        <ele>40</ele>
+        <time>2024-01-01T10:14:00Z</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>

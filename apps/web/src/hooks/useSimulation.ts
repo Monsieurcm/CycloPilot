@@ -48,6 +48,10 @@ const DEFAULT_CONFIG: SimulationConfig = {
 export interface UseSimulationResult {
   metrics: RideMetrics;
 
+  route: GPXPoint[];
+
+  currentPoint: GPXPoint | null;
+
   playing: boolean;
 
   speed: number;
@@ -55,6 +59,18 @@ export interface UseSimulationResult {
   elapsedTime: number;
 
   progress: number;
+
+  averageSpeed: number;
+
+  maxSpeed: number;
+
+  remainingDistance: number;
+
+  remainingElevation: number;
+
+  remainingTime: number;
+
+  estimatedArrival: Date;
 
   play(): void;
 
@@ -99,27 +115,59 @@ export function useSimulation(
   const [progress, setProgress] =
     useState(engine.getProgress());
 
+  const [route, setRoute] =
+    useState<GPXPoint[]>(engine.getRoute());
+
+  const [currentPoint, setCurrentPoint] =
+    useState<GPXPoint | null>(engine.getCurrentPoint());
+
+  const [averageSpeed, setAverageSpeed] =
+    useState<number>(engine.getAverageSpeed());
+
+  const [maxSpeed, setMaxSpeed] =
+    useState<number>(engine.getMaxSpeed());
+
+  const [remainingDistance, setRemainingDistance] =
+    useState<number>(engine.getRemainingDistance());
+
+  const [remainingElevation, setRemainingElevation] =
+    useState<number>(engine.getRemainingElevation());
+
+  const [remainingTime, setRemainingTime] =
+    useState<number>(engine.getRemainingTime());
+
+  const [estimatedArrival, setEstimatedArrival] =
+    useState<Date>(engine.getEstimatedArrival());
+
+  const syncFromEngine = useCallback(() => {
+    setMetrics(engine.getMetrics());
+    setPlaying(engine.isPlaying());
+    setPlaybackSpeed(engine.getSpeed());
+    setElapsedTime(engine.getElapsedTime());
+    setProgress(engine.getProgress());
+    setCurrentPoint(engine.getCurrentPoint());
+    setRoute(engine.getRoute());
+    setAverageSpeed(engine.getAverageSpeed());
+    setMaxSpeed(engine.getMaxSpeed());
+    setRemainingDistance(engine.getRemainingDistance());
+    setRemainingElevation(engine.getRemainingElevation());
+    setRemainingTime(engine.getRemainingTime());
+    setEstimatedArrival(engine.getEstimatedArrival());
+  }, [engine]);
+
   useEffect(() => {
 
     const unsubscribeMetrics =
-      engine.onUpdate((m) => {
-
-        setMetrics(m);
-
-        setProgress(engine.getProgress());
-
+      engine.onUpdate(() => {
+        syncFromEngine();
       });
 
     const unsubscribeState =
-      engine.onStateChanged((state) => {
-
-        setPlaying(state.playing);
-
-        setPlaybackSpeed(state.speed);
-
-        setElapsedTime(state.elapsedTime);
-
+      engine.onStateChanged(() => {
+        syncFromEngine();
       });
+
+    syncFromEngine();
 
     return () => {
 
@@ -129,7 +177,21 @@ export function useSimulation(
 
     };
 
-  }, [engine]);
+  }, [engine, syncFromEngine]);
+
+  useEffect(() => {
+    if (!playing) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      engine.step(0.25, 0);
+    }, 250);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [engine, playing]);
 
   const play = useCallback(
     () => engine.play(),
@@ -172,13 +234,20 @@ export function useSimulation(
   );
 
   const loadRoute = useCallback(
-    (points: GPXPoint[]) => engine.loadRoute(points),
-    [engine]
+    (points: GPXPoint[]) => {
+      engine.loadRoute(points);
+      syncFromEngine();
+    },
+    [engine, syncFromEngine]
   );
 
   return {
 
     metrics,
+
+    route,
+
+    currentPoint,
 
     playing,
 
@@ -187,6 +256,18 @@ export function useSimulation(
     elapsedTime,
 
     progress,
+
+    averageSpeed,
+
+    maxSpeed,
+
+    remainingDistance,
+
+    remainingElevation,
+
+    remainingTime,
+
+    estimatedArrival,
 
     play,
 

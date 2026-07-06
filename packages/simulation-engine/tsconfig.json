@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "node16",
+    "moduleResolution": "node16",
+    "declaration": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "composite": true
+  },
+  "references": [{ "path": "../shared" }],
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

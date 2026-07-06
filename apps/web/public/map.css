@@ -1,0 +1,14 @@
+svg {
+  display: block;
+}
+
+path {
+  fill: none;
+  stroke: #1f2937;
+  stroke-width: 1;
+}
+
+text {
+  fill: #d1d5db;
+  font-size: 14px;
+}
