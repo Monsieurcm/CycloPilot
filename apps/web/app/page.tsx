@@ -9,17 +9,50 @@ import { GPXUploader } from "../src/components/GPXUploader";
 import { DashboardAdvanced } from "../src/components/DashboardAdvanced";
 import { useSimulation } from "../src/hooks/useSimulation";
 
-const DEMO_ROUTE: GPXPoint[] = [
-  { lat: 48.8566, lon: 2.3522, elevation: 35, distance: 0 },
-  { lat: 48.8572, lon: 2.3537, elevation: 38, distance: 180 },
-  { lat: 48.858, lon: 2.3551, elevation: 42, distance: 360 },
-  { lat: 48.8589, lon: 2.3567, elevation: 39, distance: 560 },
-  { lat: 48.86, lon: 2.3583, elevation: 45, distance: 780 },
-  { lat: 48.8612, lon: 2.36, elevation: 43, distance: 1020 },
-];
+type AppSimulationState =
+  | "no-route"
+  | "loading"
+  | "route-loaded"
+  | "running"
+  | "finished";
+
+function getStateMessage(state: AppSimulationState): string {
+  switch (state) {
+    case "no-route":
+      return "Aucun parcours charge. Importez un fichier GPX pour commencer.";
+    case "loading":
+      return "Chargement du parcours en cours...";
+    case "route-loaded":
+      return "Parcours charge. Vous pouvez lancer la simulation.";
+    case "running":
+      return "Simulation en cours.";
+    case "finished":
+      return "Simulation terminee. Appuyez sur Stop pour recommencer.";
+    default:
+      return "Etat inconnu.";
+  }
+}
+
+function getStateLabel(state: AppSimulationState): string {
+  switch (state) {
+    case "no-route":
+      return "Aucun parcours";
+    case "loading":
+      return "Chargement";
+    case "route-loaded":
+      return "Parcours charge";
+    case "running":
+      return "Simulation en cours";
+    case "finished":
+      return "Simulation terminee";
+    default:
+      return "Inconnu";
+  }
+}
 
 export default function HomePage() {
-  const [route, setRoute] = useState<GPXPoint[]>(DEMO_ROUTE);
+  const [route, setRoute] = useState<GPXPoint[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
   const {
     metrics,
     playing,
@@ -46,6 +79,24 @@ export default function HomePage() {
     loadRoute(route);
   }, [route, loadRoute]);
 
+  const hasRoute = route.length > 0;
+
+  const appState: AppSimulationState = isImporting
+    ? "loading"
+    : !hasRoute
+      ? "no-route"
+      : playing
+        ? "running"
+        : progress >= 1
+          ? "finished"
+          : "route-loaded";
+
+  const canPlay = hasRoute && !isImporting && !playing && progress < 1;
+  const canPause = hasRoute && !isImporting && playing;
+  const canStop = hasRoute && !isImporting && (playing || progress > 0);
+  const canNavigate = hasRoute && !isImporting;
+  const canChangeSpeed = hasRoute && !isImporting;
+
   return (
     <main
       style={{
@@ -69,18 +120,42 @@ export default function HomePage() {
       >
         <h1 style={{ marginTop: 0 }}>CycloPilot Simulation</h1>
         <p style={{ marginTop: 0, opacity: 0.9 }}>
-          Page reconstruite en page.tsx avec le hook useSimulation.
+          Simulation GPS avec suivi d'etat et controles contextuels.
         </p>
+
+        <div
+          style={{
+            marginBottom: "1rem",
+            borderRadius: 12,
+            padding: "0.75rem 0.9rem",
+            border: "1px solid rgba(148, 163, 184, 0.25)",
+            background: "rgba(15, 23, 42, 0.55)",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: "0.85rem", opacity: 0.8 }}>
+            Etat de l'application
+          </p>
+          <p style={{ margin: "0.35rem 0 0", fontWeight: 650 }}>
+            {getStateMessage(appState)}
+          </p>
+        </div>
 
         <GPXUploader
           onRouteLoaded={(newRoute) => {
             setRoute(newRoute);
           }}
+          onLoadingChange={setIsImporting}
         />
 
         <SimulationControls
           playing={playing}
           speed={speed}
+          canPlay={canPlay}
+          canPause={canPause}
+          canStop={canStop}
+          canPrevious={canNavigate}
+          canNext={canNavigate}
+          canChangeSpeed={canChangeSpeed}
           onPlay={play}
           onPause={pause}
           onStop={stop}
@@ -97,7 +172,7 @@ export default function HomePage() {
             gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
           }}
         >
-          <StatCard label="Etat" value={playing ? "En cours" : "Pause"} />
+          <StatCard label="Etat" value={getStateLabel(appState)} />
           <StatCard label="Vitesse" value={`${metrics.speed.toFixed(1)} km/h`} />
           <StatCard label="Cadence" value={`${metrics.cadence.toFixed(0)} rpm`} />
           <StatCard label="Puissance" value={`${metrics.power.toFixed(0)} W`} />

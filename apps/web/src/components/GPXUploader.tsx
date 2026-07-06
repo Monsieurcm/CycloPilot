@@ -6,9 +6,10 @@ import { parseGPX } from "../utils/gpxParser";
 
 interface GPXUploaderProps {
   onRouteLoaded(route: GPXPoint[]): void;
+  onLoadingChange?(loading: boolean): void;
 }
 
-export function GPXUploader({ onRouteLoaded }: GPXUploaderProps) {
+export function GPXUploader({ onRouteLoaded, onLoadingChange }: GPXUploaderProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -20,6 +21,7 @@ export function GPXUploader({ onRouteLoaded }: GPXUploaderProps) {
     if (!file) {
       setError("No file selected.");
       setFileName(null);
+      onLoadingChange?.(false);
       return;
     }
 
@@ -27,10 +29,12 @@ export function GPXUploader({ onRouteLoaded }: GPXUploaderProps) {
       setError("Invalid file type. Please select a .gpx file.");
       setFileName(null);
       event.target.value = "";
+      onLoadingChange?.(false);
       return;
     }
 
     setLoading(true);
+    onLoadingChange?.(true);
     setError(null);
     setFileName(file.name);
 
@@ -44,6 +48,7 @@ export function GPXUploader({ onRouteLoaded }: GPXUploaderProps) {
       setFileName(null);
     } finally {
       setLoading(false);
+      onLoadingChange?.(false);
     }
   };
 
