@@ -9,18 +9,24 @@ import {
 
 interface DashboardAdvancedProps {
   averageSpeed: number;
+  currentSpeed: number;
   maxSpeed: number;
   remainingDistance: number;
-  remainingElevation: number;
+  currentGradient: number;
+  remainingPositiveElevation: number;
+  remainingNegativeElevation: number;
   remainingTime: number;
   estimatedArrival?: Date;
 }
 
 export function DashboardAdvanced({
   averageSpeed,
+  currentSpeed,
   maxSpeed,
   remainingDistance,
-  remainingElevation,
+  currentGradient,
+  remainingPositiveElevation,
+  remainingNegativeElevation,
   remainingTime,
   estimatedArrival,
 }: DashboardAdvancedProps) {
@@ -34,14 +40,16 @@ export function DashboardAdvanced({
       }}
     >
       <DashboardCard label="Vitesse moyenne" value={formatSpeed(averageSpeed)} />
+      <DashboardCard label="Vitesse calculée" value={formatSpeed(currentSpeed)} />
       <DashboardCard label="Vitesse max" value={formatSpeed(maxSpeed)} />
+      <DashboardCard label="Pente actuelle" value={`${currentGradient.toFixed(1)} %`} />
       <DashboardCard
         label="Distance restante"
         value={formatDistance(remainingDistance)}
       />
       <DashboardCard
         label="Dénivelé restant"
-        value={`${Math.round(remainingElevation)} m`}
+        value={`${Math.round(remainingPositiveElevation)} m + / ${Math.round(remainingNegativeElevation)} m -`}
       />
       <DashboardCard
         label="Temps restant"
