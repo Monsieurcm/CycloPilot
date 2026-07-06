@@ -2,6 +2,7 @@ import { RideMetrics, SimulationConfig, GPXPoint } from "@cyclopilot/shared";
 import {
   createDefaultPhysicsProfile,
   calculateGradePercent,
+  getMaxSafeSpeedKmh,
   estimateSpeedFromPower,
   type PhysicsProfile,
 } from "./physics";
@@ -276,14 +277,19 @@ export class SimulationEngine {
 
     const currentPoint = this.getCurrentPoint();
     const nextPoint = this.route[this.state.currentIndex + 1];
-    const gradePercent = currentPoint ? calculateGradePercent({ currentPoint, nextPoint }) : 0;
+    const gradePercent = typeof currentPoint?.gradient === "number"
+      ? currentPoint.gradient
+      : currentPoint
+        ? calculateGradePercent({ currentPoint, nextPoint })
+        : 0;
     const targetSpeedMs = userPower > 0
       ? estimateSpeedFromPower(userPower, gradePercent, this.physicsProfile)
       : this.state.speed / 3.6;
-    const effectiveSpeedMs = userPower > 0 ? targetSpeedMs : this.state.speed / 3.6;
+    const effectiveSpeedMs = Math.min(targetSpeedMs, getMaxSafeSpeedKmh() / 3.6);
     const effectiveSpeedKmh = effectiveSpeedMs * 3.6;
 
     this.state.speed = userPower > 0 ? effectiveSpeedKmh : this.state.speed;
+    this.metrics.speed = userPower > 0 ? effectiveSpeedKmh : this.state.speed;
     this.metrics.power = userPower > 0 ? userPower : 0;
 
     this.state.elapsedTime += deltaTime * this.state.speed;

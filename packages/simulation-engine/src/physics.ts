@@ -22,6 +22,9 @@ export interface PhysicsPowerContext {
   profile: PhysicsProfile;
 }
 
+const MAX_SAFE_SPEED_KMH = 70;
+const MAX_SAFE_SPEED_MS = MAX_SAFE_SPEED_KMH / 3.6;
+
 const DEFAULT_PROFILE: PhysicsProfile = {
   riderMassKg: 75,
   bikeMassKg: 8,
@@ -115,7 +118,7 @@ export function estimateSpeedFromPower(
   }
 
   let low = 0;
-  let high = 30;
+  let high = MAX_SAFE_SPEED_MS;
 
   for (let i = 0; i < 40; i++) {
     const mid = (low + high) / 2;
@@ -133,4 +136,8 @@ export function estimateSpeedFromPower(
   }
 
   return (low + high) / 2;
+}
+
+export function getMaxSafeSpeedKmh(): number {
+  return MAX_SAFE_SPEED_KMH;
 }
