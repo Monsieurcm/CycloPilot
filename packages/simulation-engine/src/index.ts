@@ -10,25 +10,29 @@ interface SimulationState {
 type MetricsListener = (metrics: RideMetrics) => void;
 type StateListener = (state: Readonly<SimulationState>) => void;
 
+const DEFAULT_METRICS: RideMetrics = {
+  speed: 0,
+  cadence: 0,
+  power: 0,
+  distance: 0,
+  elevation: 0,
+};
+
+const DEFAULT_STATE: SimulationState = {
+  playing: false,
+  speed: 1,
+  elapsedTime: 0,
+  currentIndex: 0,
+};
+
 export class SimulationEngine {
   private readonly config: SimulationConfig;
 
   private route: GPXPoint[] = [];
 
-  private metrics: RideMetrics = {
-    speed: 0,
-    cadence: 0,
-    power: 0,
-    distance: 0,
-    elevation: 0,
-  };
+  private metrics: RideMetrics = { ...DEFAULT_METRICS };
 
-  private state: SimulationState = {
-    playing: false,
-    speed: 1,
-    elapsedTime: 0,
-    currentIndex: 0,
-  };
+  private state: SimulationState = { ...DEFAULT_STATE };
 
   private indexStepAccumulator = 0;
 
@@ -64,7 +68,7 @@ export class SimulationEngine {
   private emitMetrics(): void {
     const metrics = this.getMetrics();
 
-    this.metricsListeners.forEach(listener => listener(metrics));
+    this.metricsListeners.forEach((listener) => listener(metrics));
   }
 
   private emitState(): void {
@@ -78,8 +82,8 @@ export class SimulationEngine {
    */
   loadRoute(points: GPXPoint[]): void {
     this.route = [...points];
-    this.state.currentIndex = 0;
-    this.state.elapsedTime = 0;
+    this.state.currentIndex = DEFAULT_STATE.currentIndex;
+    this.state.elapsedTime = DEFAULT_STATE.elapsedTime;
     this.indexStepAccumulator = 0;
 
     this.refreshMetrics();
@@ -99,9 +103,9 @@ export class SimulationEngine {
   }
 
   stop(): void {
-    this.state.playing = false;
-    this.state.elapsedTime = 0;
-    this.state.currentIndex = 0;
+    this.state.playing = DEFAULT_STATE.playing;
+    this.state.elapsedTime = DEFAULT_STATE.elapsedTime;
+    this.state.currentIndex = DEFAULT_STATE.currentIndex;
     this.indexStepAccumulator = 0;
 
     this.refreshMetrics();
@@ -163,7 +167,7 @@ export class SimulationEngine {
 
     this.state.currentIndex = Math.max(
       0,
-      Math.min(index, this.route.length - 1)
+      Math.min(index, this.route.length - 1),
     );
 
     this.refreshMetrics();
@@ -226,16 +230,12 @@ export class SimulationEngine {
 
   reset(): void {
     this.metrics = {
-      speed: 0,
-      cadence: 0,
-      power: 0,
-      distance: 0,
-      elevation: 0,
+      ...DEFAULT_METRICS,
     };
 
-    this.state.playing = false;
-    this.state.elapsedTime = 0;
-    this.state.currentIndex = 0;
+    this.state.playing = DEFAULT_STATE.playing;
+    this.state.elapsedTime = DEFAULT_STATE.elapsedTime;
+    this.state.currentIndex = DEFAULT_STATE.currentIndex;
     this.indexStepAccumulator = 0;
 
     this.emitMetrics();
@@ -355,10 +355,4 @@ export class SimulationEngine {
     this.metrics.elevation = point.elevation ?? 0;
   }
 
-  private calculateDifficultyFactor(
-    _point: GPXPoint,
-    _nextPoint: GPXPoint
-  ): number {
-    return 1.0;
-  }
 }
