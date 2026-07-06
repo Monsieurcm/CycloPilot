@@ -1,9 +1,16 @@
 import React from "react";
 
+type DisplayPowerMode = "auto" | "fit" | "user";
+type DisplayPowerSource = "fit" | "user" | "none";
+
 export interface SimulationControlsProps {
   playing: boolean;
   speed: number;
   power?: number;
+  appliedPower?: number;
+  powerMode?: DisplayPowerMode;
+  hasRecordedPower?: boolean;
+  activePowerSource?: DisplayPowerSource;
   canPlay?: boolean;
   canPause?: boolean;
   canStop?: boolean;
@@ -22,6 +29,8 @@ export interface SimulationControlsProps {
   onSpeedChange(speed: number): void;
 
   onPowerChange?(power: number): void;
+
+  onPowerModeChange?(mode: DisplayPowerMode): void;
 }
 
 const SPEEDS = [0.5, 1, 2, 4, 8];
@@ -30,6 +39,10 @@ export function SimulationControls({
   playing,
   speed,
   power = 0,
+  appliedPower,
+  powerMode = "auto",
+  hasRecordedPower = false,
+  activePowerSource = "none",
   canPlay = true,
   canPause = true,
   canStop = true,
@@ -44,7 +57,17 @@ export function SimulationControls({
   onNext,
   onSpeedChange,
   onPowerChange = () => {},
+  onPowerModeChange = () => {},
 }: SimulationControlsProps) {
+  const canSelectFitMode = hasRecordedPower;
+  const effectiveAppliedPower = typeof appliedPower === "number" ? appliedPower : power;
+  const sourceLabel =
+    activePowerSource === "fit"
+      ? "FIT"
+      : activePowerSource === "user"
+        ? "Utilisateur"
+        : "Aucune";
+
   return (
     <div
       style={{
@@ -95,6 +118,24 @@ export function SimulationControls({
           display: "flex",
           alignItems: "center",
           gap: 8,
+        }}
+      >
+        <span>Mode puissance</span>
+        <select
+          value={powerMode}
+          onChange={(e) => onPowerModeChange(e.target.value as DisplayPowerMode)}
+        >
+          <option value="auto">Auto</option>
+          <option value="fit" disabled={!canSelectFitMode}>Puissance FIT</option>
+          <option value="user">Puissance utilisateur</option>
+        </select>
+      </label>
+
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
           minWidth: 220,
         }}
       >
@@ -105,12 +146,23 @@ export function SimulationControls({
           max="600"
           step="10"
           value={power}
-          disabled={!canChangePower}
+          disabled={!canChangePower || powerMode === "fit"}
           onChange={(e) => onPowerChange(Number(e.target.value))}
           style={{ flex: 1 }}
         />
         <span>{power} W</span>
       </label>
+
+      <div
+        style={{
+          minWidth: 220,
+          fontSize: 13,
+          opacity: 0.9,
+        }}
+      >
+        <div>Puissance utilisee: {Math.round(effectiveAppliedPower)} W</div>
+        <div>Origine: {sourceLabel}</div>
+      </div>
     </div>
   );
 }

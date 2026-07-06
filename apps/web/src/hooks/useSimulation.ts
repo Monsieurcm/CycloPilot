@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   SimulationEngine,
+  type SimulationPowerMode,
+  type SimulationPowerSource,
 } from "@cyclopilot/simulation-engine";
 
 import type {
@@ -60,6 +62,12 @@ export interface UseSimulationResult {
 
   power: number;
 
+  powerMode: SimulationPowerMode;
+
+  hasRecordedPower: boolean;
+
+  activePowerSource: SimulationPowerSource;
+
   riderProfile: RiderProfile;
 
   elapsedTime: number;
@@ -96,6 +104,8 @@ export interface UseSimulationResult {
 
   setPower(power: number): void;
 
+  setPowerMode(mode: SimulationPowerMode): void;
+
   updateRiderProfile(profile: Partial<RiderProfile>): void;
 
   resetRiderProfile(): void;
@@ -123,6 +133,15 @@ export function useSimulation(
 
   const [power, setSimulationPower] =
     useState(0);
+
+  const [powerMode, setPowerModeState] =
+    useState<SimulationPowerMode>(engine.getPowerMode());
+
+  const [hasRecordedPower, setHasRecordedPower] =
+    useState<boolean>(engine.hasRecordedPower());
+
+  const [activePowerSource, setActivePowerSource] =
+    useState<SimulationPowerSource>(engine.getActivePowerSource());
 
   const [riderProfile, setRiderProfileState] =
     useState<RiderProfile>(engine.getRiderProfile());
@@ -172,6 +191,9 @@ export function useSimulation(
     setRemainingTime(engine.getRemainingTime());
     setEstimatedArrival(engine.getEstimatedArrival());
     setRiderProfileState(engine.getRiderProfile());
+    setPowerModeState(engine.getPowerMode());
+    setHasRecordedPower(engine.hasRecordedPower());
+    setActivePowerSource(engine.getActivePowerSource());
   }, [engine]);
 
   useEffect(() => {
@@ -257,6 +279,15 @@ export function useSimulation(
     []
   );
 
+  const setPowerMode = useCallback(
+    (mode: SimulationPowerMode) => {
+      engine.setPowerMode(mode);
+      setPowerModeState(engine.getPowerMode());
+      setActivePowerSource(engine.getActivePowerSource());
+    },
+    [engine]
+  );
+
   const updateRiderProfile = useCallback(
     (profile: Partial<RiderProfile>) => {
       engine.setRiderProfile(profile);
@@ -295,6 +326,12 @@ export function useSimulation(
 
     power,
 
+    powerMode,
+
+    hasRecordedPower,
+
+    activePowerSource,
+
     riderProfile,
 
     elapsedTime,
@@ -330,6 +367,8 @@ export function useSimulation(
     setSpeed,
 
     setPower,
+
+    setPowerMode,
 
     updateRiderProfile,
 

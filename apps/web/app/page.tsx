@@ -105,6 +105,9 @@ export default function HomePage() {
     playing,
     speed,
     power,
+    powerMode,
+    hasRecordedPower,
+    activePowerSource,
     riderProfile,
     elapsedTime,
     progress,
@@ -121,6 +124,7 @@ export default function HomePage() {
     previous,
     setSpeed,
     setPower,
+    setPowerMode,
     updateRiderProfile,
     resetRiderProfile,
     loadRoute,
@@ -151,6 +155,7 @@ export default function HomePage() {
   const canNavigate = hasRoute && !isImporting;
   const canChangeSpeed = hasRoute && !isImporting;
   const canChangePower = hasRoute && !isImporting;
+  const displayPowerMode = powerMode === "hybrid" ? "auto" : powerMode;
 
   return (
     <main
@@ -206,6 +211,10 @@ export default function HomePage() {
           playing={playing}
           speed={speed}
           power={power}
+          appliedPower={metrics.power}
+          powerMode={displayPowerMode}
+          hasRecordedPower={hasRecordedPower}
+          activePowerSource={activePowerSource}
           canPlay={canPlay}
           canPause={canPause}
           canStop={canStop}
@@ -220,6 +229,7 @@ export default function HomePage() {
           onNext={next}
           onSpeedChange={setSpeed}
           onPowerChange={setPower}
+          onPowerModeChange={setPowerMode}
         />
 
         <RiderProfilePanel
