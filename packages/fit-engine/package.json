@@ -12,10 +12,11 @@
     "typecheck": "tsc --noEmit --skipLibCheck"
   },
   "dependencies": {
-    "@cyclopilot/shared": "workspace:*"
+    "@cyclopilot/shared": "workspace:*",
+    "fit-decoder": "^1.0.5"
   },
   "devDependencies": {
-    "typescript": "^5.8.3",
-    "@types/node": "^22.14.1"
+    "@types/node": "^22.14.1",
+    "typescript": "^5.8.3"
   }
 }
