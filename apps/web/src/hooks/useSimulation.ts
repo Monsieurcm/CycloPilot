@@ -15,6 +15,7 @@ import type {
 } from "@cyclopilot/shared";
 
 export type RiderProfile = ReturnType<SimulationEngine["getRiderProfile"]>;
+export type RecordedRouteMetrics = ReturnType<SimulationEngine["getCurrentRecordedMetrics"]>;
 
 const DEFAULT_BIKE_PROFILE: BikeProfile = {
   id: "road-bike",
@@ -67,6 +68,8 @@ export interface UseSimulationResult {
   hasRecordedPower: boolean;
 
   activePowerSource: SimulationPowerSource;
+
+  recordedMetrics: RecordedRouteMetrics;
 
   riderProfile: RiderProfile;
 
@@ -143,6 +146,9 @@ export function useSimulation(
   const [activePowerSource, setActivePowerSource] =
     useState<SimulationPowerSource>(engine.getActivePowerSource());
 
+  const [recordedMetrics, setRecordedMetrics] =
+    useState<RecordedRouteMetrics>(engine.getCurrentRecordedMetrics());
+
   const [riderProfile, setRiderProfileState] =
     useState<RiderProfile>(engine.getRiderProfile());
 
@@ -194,6 +200,7 @@ export function useSimulation(
     setPowerModeState(engine.getPowerMode());
     setHasRecordedPower(engine.hasRecordedPower());
     setActivePowerSource(engine.getActivePowerSource());
+    setRecordedMetrics(engine.getCurrentRecordedMetrics());
   }, [engine]);
 
   useEffect(() => {
@@ -331,6 +338,8 @@ export function useSimulation(
     hasRecordedPower,
 
     activePowerSource,
+
+    recordedMetrics,
 
     riderProfile,
 

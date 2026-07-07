@@ -18,6 +18,14 @@ interface SimulationState {
   currentIndex: number;
 }
 
+export interface RecordedRouteMetrics {
+  cadence?: number;
+  heartRate?: number;
+  temperature?: number;
+  power?: number;
+  speed?: number;
+}
+
 export type SimulationPowerMode = "auto" | "fit" | "user" | "hybrid";
 export type SimulationPowerSource = "fit" | "user" | "none";
 
@@ -46,6 +54,14 @@ const DEFAULT_STATE: SimulationState = {
 
 function clampSimulationSpeed(speed: number): number {
   return Math.min(8, Math.max(0.5, speed));
+}
+
+function normalizeOptionalMetric(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return undefined;
+  }
+
+  return value;
 }
 
 function calculateProgress(routeLength: number, currentIndex: number): number {
@@ -168,6 +184,22 @@ export class SimulationEngine {
 
   getActivePowerSource(): SimulationPowerSource {
     return this.activePowerSource;
+  }
+
+  getCurrentRecordedMetrics(): RecordedRouteMetrics {
+    const point = this.getCurrentPoint();
+
+    if (!point) {
+      return {};
+    }
+
+    return {
+      cadence: normalizeOptionalMetric(point.cadence),
+      heartRate: normalizeOptionalMetric(point.heartRate),
+      temperature: normalizeOptionalMetric(point.temperature),
+      power: normalizeOptionalMetric(point.power),
+      speed: normalizeOptionalMetric(point.speed),
+    };
   }
 
   private getCurrentRecordedPower(): number | null {
