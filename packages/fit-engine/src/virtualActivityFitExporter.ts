@@ -16,8 +16,11 @@ const DEFAULT_GENERATOR_OPTIONS: FitGeneratorOptions = {
   sport: FitConstants.sport.cycling,
   subSport: FitConstants.sub_sport.road,
   timerEvent: FitConstants.event.timer,
+  activityEvent: FitConstants.event.activity,
+  activityType: FitConstants.activity.manual,
   eventTypeStart: FitConstants.event_type.start,
   eventTypeStopAll: FitConstants.event_type.stop_all,
+  eventTypeStop: FitConstants.event_type.stop,
   softwareVersion: 100,
 };
 
@@ -51,13 +54,27 @@ class VirtualActivityFitEncoder extends FitEncoder {
   encode(): ArrayBuffer {
     this.writeFileId();
     this.writeDeviceInfo();
+    this.writeWorkout();
     this.writeStartEvent();
     this.writeRecords();
     this.writeLap();
     this.writeSession();
     this.writeStopEvent();
+    this.writeActivity();
 
     return this.getFile() as ArrayBuffer;
+  }
+
+  private writeWorkout(): void {
+    const m = this.activityStructure.workout;
+
+    new Message(
+      FitConstants.mesg_num.workout,
+      FitMessages.workout,
+      "wkt_name",
+      "sport",
+      "sub_sport",
+    ).writeDataMessage(m.name, m.sport, m.subSport);
   }
 
   private writeFileId(): void {
@@ -147,6 +164,8 @@ class VirtualActivityFitEncoder extends FitEncoder {
       "max_speed",
       "avg_power",
       "max_power",
+      "total_calories",
+      "total_work",
       "sport",
     ];
 
@@ -177,6 +196,8 @@ class VirtualActivityFitEncoder extends FitEncoder {
       m.maxSpeed,
       m.avgPower,
       m.maxPower,
+      m.totalCalories,
+      m.totalWork,
       FitConstants.sport.cycling,
     ];
 
@@ -215,6 +236,8 @@ class VirtualActivityFitEncoder extends FitEncoder {
       "max_speed",
       "avg_power",
       "max_power",
+      "total_calories",
+      "total_work",
       "num_laps",
     ];
 
@@ -245,6 +268,8 @@ class VirtualActivityFitEncoder extends FitEncoder {
       m.maxSpeed,
       m.avgPower,
       m.maxPower,
+      m.totalCalories,
+      m.totalWork,
       m.numLaps,
     ];
 
@@ -320,6 +345,21 @@ class VirtualActivityFitEncoder extends FitEncoder {
     const message = new Message(FitConstants.mesg_num.record, FitMessages.record, ...(fields as never[]));
     this.recordMessageCache.set(key, message);
     return message;
+  }
+
+  private writeActivity(): void {
+    const m = this.activityStructure.activity;
+
+    new Message(
+      FitConstants.mesg_num.activity,
+      FitMessages.activity,
+      "total_timer_time",
+      "local_timestamp",
+      "num_sessions",
+      "type",
+      "event",
+      "event_type",
+    ).writeDataMessage(m.totalTimerTime, m.localTimestamp, m.numSessions, m.type, m.event, m.eventType);
   }
 }
 

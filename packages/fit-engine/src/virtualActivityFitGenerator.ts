@@ -76,6 +76,21 @@ export interface FitEventMessage {
   eventGroup: number;
 }
 
+export interface FitWorkoutMessage {
+  name: string;
+  sport: number;
+  subSport: number;
+}
+
+export interface FitActivityMessage {
+  totalTimerTime: number;
+  localTimestamp: number;
+  numSessions: number;
+  type: number;
+  event: number;
+  eventType: number;
+}
+
 export interface FitLapMessage {
   timestamp: number;
   startTime: number;
@@ -92,6 +107,8 @@ export interface FitLapMessage {
   maxSpeed: number;
   avgPower: number;
   maxPower: number;
+  totalCalories: number;
+  totalWork: number;
   avgHeartRate?: number;
   maxHeartRate?: number;
   avgCadence?: number;
@@ -120,10 +137,12 @@ export interface FitRecordMessage {
 export interface FitActivityStructure {
   fileId: FitFileIdMessage;
   deviceInfo: FitDeviceInfoMessage;
+  workout: FitWorkoutMessage;
   startEvent: FitEventMessage;
   stopEvent: FitEventMessage;
   lap: FitLapMessage;
   session: FitSessionMessage;
+  activity: FitActivityMessage;
   records: FitRecordMessage[];
 }
 
@@ -137,8 +156,11 @@ export interface FitGeneratorOptions {
   sport: number;
   subSport: number;
   timerEvent: number;
+  activityEvent: number;
+  activityType: number;
   eventTypeStart: number;
   eventTypeStopAll: number;
+  eventTypeStop: number;
 }
 
 export function buildFitActivityStructure(
@@ -163,6 +185,9 @@ export function buildFitActivityStructure(
     .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
   const powers = activity.points.map((point) => point.power);
   const speeds = activity.points.map((point) => point.speed);
+  const averagePowerWatts = Math.max(0, Math.round(average(powers)));
+  const estimatedEnergyKj = Math.max(0, (averagePowerWatts * activity.currentState.elapsedTime) / 1000);
+  const estimatedCalories = Math.max(0, Math.round(estimatedEnergyKj / 4.184));
 
   const records: FitRecordMessage[] = activity.points.map((point) => ({
     timestamp: toFitTimestamp(point.timestamp),
@@ -209,6 +234,12 @@ export function buildFitActivityStructure(
     eventGroup: 0,
   };
 
+  const workout: FitWorkoutMessage = {
+    name: activity.metadata.name || "Virtual Activity",
+    sport: options.sport,
+    subSport: options.subSport,
+  };
+
   const lapBase: FitLapMessage = {
     timestamp: endTime,
     startTime,
@@ -223,8 +254,10 @@ export function buildFitActivityStructure(
     totalDescent: Math.max(0, Math.round(activity.route.elevationLoss)),
     avgSpeed: toFitSpeed(average(speeds)),
     maxSpeed: toFitSpeed(max(speeds)),
-    avgPower: Math.max(0, Math.round(average(powers))),
+    avgPower: averagePowerWatts,
     maxPower: Math.max(0, Math.round(max(powers))),
+    totalCalories: estimatedCalories,
+    totalWork: Math.max(0, Math.round(estimatedEnergyKj * 1000)),
     avgHeartRate: heartRates.length > 0 ? Math.round(average(heartRates)) : undefined,
     maxHeartRate: heartRates.length > 0 ? Math.round(max(heartRates)) : undefined,
     avgCadence: cadences.length > 0 ? Math.round(average(cadences)) : undefined,
@@ -238,13 +271,24 @@ export function buildFitActivityStructure(
     numLaps: 1,
   };
 
+  const activityMessage: FitActivityMessage = {
+    totalTimerTime: totalElapsedMs,
+    localTimestamp: startTime,
+    numSessions: 1,
+    type: options.activityType,
+    event: options.activityEvent,
+    eventType: options.eventTypeStop,
+  };
+
   return {
     fileId,
     deviceInfo,
+    workout,
     startEvent,
     stopEvent,
     lap: lapBase,
     session,
+    activity: activityMessage,
     records,
   };
 }
