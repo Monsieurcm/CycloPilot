@@ -222,6 +222,8 @@ export class SimulationEngine {
 
   private virtualActivity: VirtualActivity | null = null;
 
+  private lastActivityPointTimestampMs = 0;
+
   private readonly metricsListeners = new Set<MetricsListener>();
   private readonly stateListeners = new Set<StateListener>();
 
@@ -446,6 +448,7 @@ export class SimulationEngine {
     this.state.currentIndex = DEFAULT_STATE.currentIndex;
     this.state.elapsedTime = DEFAULT_STATE.elapsedTime;
     this.indexStepAccumulator = 0;
+    this.lastActivityPointTimestampMs = 0;
     this.virtualActivity = this.createVirtualActivity(this.route);
     this.resetComparisonState();
 
@@ -470,6 +473,7 @@ export class SimulationEngine {
     this.state.elapsedTime = DEFAULT_STATE.elapsedTime;
     this.state.currentIndex = DEFAULT_STATE.currentIndex;
     this.indexStepAccumulator = 0;
+    this.lastActivityPointTimestampMs = 0;
     this.resetVirtualActivityProgress();
     this.resetComparisonState();
 
@@ -620,6 +624,7 @@ export class SimulationEngine {
     this.state.currentIndex = DEFAULT_STATE.currentIndex;
     this.indexStepAccumulator = 0;
     this.activePowerSource = "none";
+    this.lastActivityPointTimestampMs = 0;
     this.resetVirtualActivityProgress();
     this.resetComparisonState();
 
@@ -823,9 +828,11 @@ export class SimulationEngine {
     }
 
     const createdAtMs = Date.parse(this.virtualActivity.metadata.createdAt);
-    const timestampMs = Number.isFinite(createdAtMs)
+    const rawTimestampMs = Number.isFinite(createdAtMs)
       ? createdAtMs + this.state.elapsedTime * 1000
       : Date.now();
+    const timestampMs = Math.max(rawTimestampMs, this.lastActivityPointTimestampMs + 1);
+    this.lastActivityPointTimestampMs = timestampMs;
 
     const activityPoint: ActivityPoint = {
       timestamp: new Date(timestampMs).toISOString(),
@@ -836,6 +843,8 @@ export class SimulationEngine {
       power: this.metrics.power,
       gradient: point.gradient ?? 0,
       cumulativeDistance: this.metrics.distance,
+      cadence: normalizeOptionalMetric(point.fitMetrics?.cadence ?? point.cadence),
+      heartRate: normalizeOptionalMetric(point.fitMetrics?.heartRate ?? point.heartRate),
     };
 
     this.virtualActivity.points.push(activityPoint);
