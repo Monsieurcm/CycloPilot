@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit --skipLibCheck"
   },
   "dependencies": {
+    "@cyclopilot/fit-engine": "workspace:*",
     "@cyclopilot/shared": "workspace:*"
   },
   "devDependencies": {

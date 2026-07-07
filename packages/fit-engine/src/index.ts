@@ -1,5 +1,5 @@
 import { applyRouteGradients, type GPXPoint } from "@cyclopilot/shared";
-import { fit2json, parseRecords } from "fit-decoder";
+import fitDecoder from "fit-decoder";
 
 export {
   buildFitActivityStructure,
@@ -8,10 +8,21 @@ export {
   type FitRecordMessage,
 } from "./virtualActivityFitGenerator.js";
 
+export {
+  exportVirtualActivityToFitArrayBuffer,
+  validateFitArrayBuffer,
+  type FitValidationResult,
+} from "./virtualActivityFitExporter.js";
+
 interface ParsedFITRecord {
   type?: string;
   data?: Record<string, unknown>;
 }
+
+const { fit2json, parseRecords } = fitDecoder as {
+  fit2json: (buffer: ArrayBuffer) => unknown;
+  parseRecords: (input: unknown) => unknown;
+};
 
 function toFiniteNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) {

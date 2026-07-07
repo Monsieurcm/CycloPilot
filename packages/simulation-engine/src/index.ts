@@ -8,6 +8,11 @@ import {
   type VirtualActivityCurrentPosition,
 } from "@cyclopilot/shared";
 import {
+  exportVirtualActivityToFitArrayBuffer,
+  validateFitArrayBuffer,
+  type FitValidationResult,
+} from "@cyclopilot/fit-engine";
+import {
   applyRiderPhysicsOverrides,
   buildRiderPhysicsProfile,
   type RiderPhysicsProfile,
@@ -348,6 +353,19 @@ export class SimulationEngine {
       },
       points: [...this.virtualActivity.points],
     };
+  }
+
+  exportVirtualActivityFitArrayBuffer(): ArrayBuffer {
+    if (!this.virtualActivity) {
+      throw new Error("No virtual activity available for FIT export");
+    }
+
+    return exportVirtualActivityToFitArrayBuffer(this.virtualActivity);
+  }
+
+  async validateVirtualActivityFit(): Promise<FitValidationResult> {
+    const fitBuffer = this.exportVirtualActivityFitArrayBuffer();
+    return validateFitArrayBuffer(fitBuffer);
   }
 
   getEstimatedFutureFitSizeBytes(): number {

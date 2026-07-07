@@ -14,7 +14,8 @@
   "dependencies": {
     "@cyclopilot/shared": "workspace:*",
     "fit-decoder": "^1.0.5",
-    "fit-encoder": "0.1.5"
+    "fit-encoder": "0.1.5",
+    "fit-file-parser": "3.0.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",
