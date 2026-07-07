@@ -102,6 +102,7 @@ export default function HomePage() {
   const [isImporting, setIsImporting] = useState(false);
   const [isExportingFit, setIsExportingFit] = useState(false);
   const [lastFitExportSummary, setLastFitExportSummary] = useState<{
+    fileName: string;
     pointCount: number;
     durationSeconds: number;
     distanceMeters: number;
@@ -189,9 +190,10 @@ export default function HomePage() {
       const blob = new Blob([exportResult.file], { type: "application/octet-stream" });
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
+      const fileName = `virtual-activity-${Date.now()}.fit`;
 
       link.href = downloadUrl;
-      link.download = `virtual-activity-${Date.now()}.fit`;
+      link.download = fileName;
       link.style.display = "none";
       document.body.appendChild(link);
       link.click();
@@ -199,6 +201,7 @@ export default function HomePage() {
       URL.revokeObjectURL(downloadUrl);
 
       setLastFitExportSummary({
+        fileName,
         pointCount: exportResult.pointCount,
         durationSeconds: exportResult.durationSeconds,
         distanceMeters: exportResult.distanceMeters,
@@ -374,9 +377,36 @@ export default function HomePage() {
             </button>
 
             {lastFitExportSummary && (
-              <p style={{ margin: "0.6rem 0 0", fontSize: "0.9rem" }}>
-                Export FIT genere: {lastFitExportSummary.pointCount} points | Duree: {lastFitExportSummary.durationSeconds.toFixed(1)} s | Distance: {lastFitExportSummary.distanceMeters.toFixed(0)} m | Taille: {(lastFitExportSummary.fileSizeBytes / 1024).toFixed(1)} KB
-              </p>
+              <div style={{ marginTop: "0.6rem" }}>
+                <p style={{ margin: 0, fontSize: "0.95rem", fontWeight: 650, color: "#86efac" }}>
+                  Export FIT reussi.
+                </p>
+                <p style={{ margin: "0.2rem 0 0", fontSize: "0.9rem" }}>
+                  Fichier cree: {lastFitExportSummary.fileName}
+                </p>
+                <p style={{ margin: "0.2rem 0 0", fontSize: "0.9rem" }}>
+                  Points exportes: {lastFitExportSummary.pointCount} | Duree: {lastFitExportSummary.durationSeconds.toFixed(1)} s | Distance: {lastFitExportSummary.distanceMeters.toFixed(0)} m | Taille: {(lastFitExportSummary.fileSizeBytes / 1024).toFixed(1)} KB
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    stop();
+                    setLastFitExportSummary(null);
+                  }}
+                  style={{
+                    marginTop: "0.55rem",
+                    borderRadius: 8,
+                    border: "1px solid rgba(148, 163, 184, 0.35)",
+                    background: "rgba(30, 41, 59, 0.95)",
+                    color: "#f8fafc",
+                    padding: "0.45rem 0.75rem",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                >
+                  Lancer une nouvelle simulation
+                </button>
+              </div>
             )}
           </div>
         )}
