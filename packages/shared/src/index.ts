@@ -93,6 +93,74 @@ export interface SimulationConfig {
   track: GPXTrack;
 }
 
+export type ActivityRouteSource = "gpx" | "fit";
+
+export interface VirtualActivityMetadata {
+  id: string;
+  name: string;
+  createdAt: string;
+  routeSource: ActivityRouteSource;
+}
+
+export interface VirtualActivityRiderProfile {
+  riderWeightKg?: number;
+  bikeWeightKg?: number;
+  crr?: number;
+  cda?: number;
+  frontalAreaM2?: number;
+  airDensityKgM3?: number;
+  gravityMs2?: number;
+  drivetrainEfficiency?: number;
+}
+
+export interface VirtualActivityParameters {
+  riderProfile: VirtualActivityRiderProfile;
+  bikeProfile: BikeProfile;
+  powerStrategy: string;
+}
+
+export interface VirtualActivityRoute {
+  originalRoute: GPXPoint[];
+  totalDistance: number;
+  elevationGain: number;
+  elevationLoss: number;
+}
+
+export interface VirtualActivityCurrentPosition {
+  lat: number;
+  lon: number;
+  altitude: number;
+  distance: number;
+}
+
+export interface VirtualActivityCurrentState {
+  elapsedTime: number;
+  traveledDistance: number;
+  currentPosition: VirtualActivityCurrentPosition | null;
+  currentSpeed: number;
+  currentPower: number;
+  currentGradient: number;
+}
+
+export interface ActivityPoint {
+  timestamp: string;
+  latitude: number;
+  longitude: number;
+  altitude: number;
+  speed: number;
+  power: number;
+  gradient: number;
+  cumulativeDistance: number;
+}
+
+export interface VirtualActivity {
+  metadata: VirtualActivityMetadata;
+  parameters: VirtualActivityParameters;
+  route: VirtualActivityRoute;
+  currentState: VirtualActivityCurrentState;
+  points: ActivityPoint[];
+}
+
 export interface FITRecord {
   timestamp: number;
   recordType: string;
