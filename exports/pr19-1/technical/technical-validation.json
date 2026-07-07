@@ -1,0 +1,111 @@
+{
+  "generatedAt": "2026-07-07T03:54:26.972Z",
+  "outputDir": "/workspaces/CycloPilot/exports/pr19-1/technical",
+  "scenarioResults": [
+    {
+      "scenario": "short",
+      "fileName": "short.fit",
+      "filePath": "/workspaces/CycloPilot/exports/pr19-1/technical/short.fit",
+      "bytes": 1110,
+      "expectedPoints": 25,
+      "checks": {
+        "crcDataValid": true,
+        "crcHeaderValid": true,
+        "messageOrderValid": true,
+        "hasFileId": true,
+        "hasSession": true,
+        "hasLap": true,
+        "hasRecords": true,
+        "hasStartEvent": true,
+        "hasStopEvent": true,
+        "timestampsMonotonic": true,
+        "recordCountMatchesPoints": true
+      },
+      "counts": {
+        "records": 25,
+        "sessions": 1,
+        "laps": 1,
+        "events": 2
+      }
+    },
+    {
+      "scenario": "long",
+      "fileName": "long.fit",
+      "filePath": "/workspaces/CycloPilot/exports/pr19-1/technical/long.fit",
+      "bytes": 16635,
+      "expectedPoints": 600,
+      "checks": {
+        "crcDataValid": true,
+        "crcHeaderValid": true,
+        "messageOrderValid": true,
+        "hasFileId": true,
+        "hasSession": true,
+        "hasLap": true,
+        "hasRecords": true,
+        "hasStartEvent": true,
+        "hasStopEvent": true,
+        "timestampsMonotonic": true,
+        "recordCountMatchesPoints": true
+      },
+      "counts": {
+        "records": 600,
+        "sessions": 1,
+        "laps": 1,
+        "events": 2
+      }
+    },
+    {
+      "scenario": "flat",
+      "fileName": "flat.fit",
+      "filePath": "/workspaces/CycloPilot/exports/pr19-1/technical/flat.fit",
+      "bytes": 5295,
+      "expectedPoints": 180,
+      "checks": {
+        "crcDataValid": true,
+        "crcHeaderValid": true,
+        "messageOrderValid": true,
+        "hasFileId": true,
+        "hasSession": true,
+        "hasLap": true,
+        "hasRecords": true,
+        "hasStartEvent": true,
+        "hasStopEvent": true,
+        "timestampsMonotonic": true,
+        "recordCountMatchesPoints": true
+      },
+      "counts": {
+        "records": 180,
+        "sessions": 1,
+        "laps": 1,
+        "events": 2
+      }
+    },
+    {
+      "scenario": "hilly",
+      "fileName": "hilly.fit",
+      "filePath": "/workspaces/CycloPilot/exports/pr19-1/technical/hilly.fit",
+      "bytes": 6915,
+      "expectedPoints": 240,
+      "checks": {
+        "crcDataValid": true,
+        "crcHeaderValid": true,
+        "messageOrderValid": true,
+        "hasFileId": true,
+        "hasSession": true,
+        "hasLap": true,
+        "hasRecords": true,
+        "hasStartEvent": true,
+        "hasStopEvent": true,
+        "timestampsMonotonic": true,
+        "recordCountMatchesPoints": true
+      },
+      "counts": {
+        "records": 240,
+        "sessions": 1,
+        "laps": 1,
+        "events": 2
+      }
+    }
+  ],
+  "allChecksPassed": true
+}
