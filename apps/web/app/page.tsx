@@ -109,6 +109,9 @@ export default function HomePage() {
     hasRecordedPower,
     activePowerSource,
     recordedMetrics,
+    hasComparisonData,
+    comparisonSnapshot,
+    comparisonStats,
     riderProfile,
     elapsedTime,
     progress,
@@ -273,6 +276,9 @@ export default function HomePage() {
           currentTemperature={recordedMetrics.temperature}
           fitRecordedPower={recordedMetrics.power}
           fitRecordedSpeed={recordedMetrics.speed}
+          comparisonAvailable={hasComparisonData}
+          comparison={comparisonSnapshot}
+          comparisonStats={comparisonStats}
         />
 
         <div
