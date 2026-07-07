@@ -21,7 +21,6 @@ import {
   calculateGradePercent,
   getMaxSafeSpeedKmh,
   estimateSpeedFromPower,
-  type PhysicsProfile,
 } from "./physics";
 
 interface SimulationState {

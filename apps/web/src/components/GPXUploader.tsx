@@ -25,8 +25,9 @@ export function GPXUploader({ onRouteLoaded, onLoadingChange }: GPXUploaderProps
       return;
     }
 
-    if (!file.name.toLowerCase().endsWith(".gpx")) {
-      setError("Invalid file type. Please select a .gpx file.");
+    const fileNameLower = file.name.toLowerCase();
+    if (!fileNameLower.endsWith(".gpx") && !fileNameLower.endsWith(".fit")) {
+      setError("Invalid file type. Please select a .gpx or .fit file.");
       setFileName(null);
       event.target.value = "";
       onLoadingChange?.(false);
@@ -63,12 +64,12 @@ export function GPXUploader({ onRouteLoaded, onLoadingChange }: GPXUploaderProps
           fontSize: 14,
         }}
       >
-        Import GPX File
+        Import GPX/FIT File
       </label>
       <input
         id="gpx-upload"
         type="file"
-        accept=".gpx"
+        accept=".gpx,.fit"
         onChange={handleFileChange}
         disabled={loading}
         style={{

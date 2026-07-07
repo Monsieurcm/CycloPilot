@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   formatDistance,
@@ -162,6 +162,11 @@ export function DashboardAdvanced({
   comparisonStats,
 }: DashboardAdvancedProps) {
   const [comparisonEnabled, setComparisonEnabled] = useState(true);
+  const [isClientMounted, setIsClientMounted] = useState(false);
+
+  useEffect(() => {
+    setIsClientMounted(true);
+  }, []);
 
   return (
     <>
@@ -192,7 +197,7 @@ export function DashboardAdvanced({
         <DashboardCard
           label="Heure d'arrivée"
           value={
-            estimatedArrival ? formatTime(estimatedArrival) : "Calculat..."
+            isClientMounted && estimatedArrival ? formatTime(estimatedArrival) : "Calcul..."
           }
         />
         <DashboardCard label="Cadence actuelle" value={formatRecordedCadence(currentCadence)} />

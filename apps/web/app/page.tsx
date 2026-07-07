@@ -101,6 +101,7 @@ export default function HomePage() {
   const [route, setRoute] = useState<GPXPoint[]>([]);
   const [isImporting, setIsImporting] = useState(false);
   const [isExportingFit, setIsExportingFit] = useState(false);
+  const [fitExportError, setFitExportError] = useState<string | null>(null);
   const [lastFitExportSummary, setLastFitExportSummary] = useState<{
     fileName: string;
     pointCount: number;
@@ -184,6 +185,7 @@ export default function HomePage() {
 
   const handleExportFit = async () => {
     setIsExportingFit(true);
+    setFitExportError(null);
 
     try {
       const exportResult = await exportVirtualActivityFit();
@@ -207,6 +209,9 @@ export default function HomePage() {
         distanceMeters: exportResult.distanceMeters,
         fileSizeBytes: exportResult.file.byteLength,
       });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erreur inconnue";
+      setFitExportError(`Echec de l'export FIT: ${message}`);
     } finally {
       setIsExportingFit(false);
     }
@@ -375,6 +380,12 @@ export default function HomePage() {
             >
               {isExportingFit ? "Export FIT en cours..." : "Exporter l'activite (.FIT)"}
             </button>
+
+            {fitExportError && (
+              <p style={{ margin: "0.55rem 0 0", fontSize: "0.9rem", color: "#fca5a5" }}>
+                {fitExportError}
+              </p>
+            )}
 
             {lastFitExportSummary && (
               <div style={{ marginTop: "0.6rem" }}>

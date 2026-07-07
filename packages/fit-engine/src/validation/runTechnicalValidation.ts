@@ -9,8 +9,8 @@ async function main(): Promise<void> {
     throw new Error("Technical FIT validation failed");
   }
 
-  console.log(`Technical FIT validation passed for ${result.scenarioResults.length} scenarios.`);
-  console.log(`Artifacts: ${result.outputDir}`);
+  console.warn(`Technical FIT validation passed for ${result.scenarioResults.length} scenarios.`);
+  console.warn(`Artifacts: ${result.outputDir}`);
 }
 
 main().catch((error: unknown) => {
