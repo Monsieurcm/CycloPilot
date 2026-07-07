@@ -361,6 +361,19 @@ export async function validateFitArrayBuffer(
     const parser = new FitParser({ force: true, mode: "list" });
     const parsed = await parser.parseAsync(Buffer.from(bytes));
     fitReaderValid = Boolean(parsed);
+
+    const parsedAny = parsed as {
+      records?: unknown[];
+      sessions?: unknown[];
+    };
+
+    if (recordCount === 0 && Array.isArray(parsedAny.records)) {
+      recordCount = parsedAny.records.length;
+    }
+
+    if (sessionCount === 0 && Array.isArray(parsedAny.sessions)) {
+      sessionCount = parsedAny.sessions.length;
+    }
   } catch {
     fitReaderValid = false;
   }

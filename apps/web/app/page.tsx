@@ -100,6 +100,13 @@ function getRemainingElevationBreakdown(
 export default function HomePage() {
   const [route, setRoute] = useState<GPXPoint[]>([]);
   const [isImporting, setIsImporting] = useState(false);
+  const [isExportingFit, setIsExportingFit] = useState(false);
+  const [lastFitExportSummary, setLastFitExportSummary] = useState<{
+    pointCount: number;
+    durationSeconds: number;
+    distanceMeters: number;
+    fileSizeBytes: number;
+  } | null>(null);
   const {
     metrics,
     playing,
@@ -114,6 +121,7 @@ export default function HomePage() {
     comparisonStats,
     virtualActivity,
     estimatedFutureFitSizeBytes,
+    exportVirtualActivityFit,
     riderProfile,
     elapsedTime,
     progress,
@@ -170,6 +178,35 @@ export default function HomePage() {
   const displayedElevation = activityState?.currentPosition?.altitude ?? metrics.elevation;
   const recordedPointsCount = virtualActivity?.points.length ?? 0;
   const estimatedFutureFitSizeKb = estimatedFutureFitSizeBytes / 1024;
+  const canExportFit = appState === "finished";
+
+  const handleExportFit = async () => {
+    setIsExportingFit(true);
+
+    try {
+      const exportResult = await exportVirtualActivityFit();
+      const blob = new Blob([exportResult.file], { type: "application/octet-stream" });
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = downloadUrl;
+      link.download = `virtual-activity-${Date.now()}.fit`;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(downloadUrl);
+
+      setLastFitExportSummary({
+        pointCount: exportResult.pointCount,
+        durationSeconds: exportResult.durationSeconds,
+        distanceMeters: exportResult.distanceMeters,
+        fileSizeBytes: exportResult.file.byteLength,
+      });
+    } finally {
+      setIsExportingFit(false);
+    }
+  };
 
   return (
     <main
@@ -285,6 +322,43 @@ export default function HomePage() {
             Duree simulee: {displayedElapsedTime.toFixed(1)} s | Distance parcourue: {displayedDistance.toFixed(0)} m | Points enregistres: {recordedPointsCount} | Taille FIT estimee: {estimatedFutureFitSizeKb.toFixed(1)} KB
           </p>
         </div>
+
+        {canExportFit && (
+          <div
+            style={{
+              marginTop: "0.8rem",
+              borderRadius: "12px",
+              border: "1px solid rgba(148, 163, 184, 0.25)",
+              background: "rgba(15, 23, 42, 0.65)",
+              padding: "0.8rem 0.95rem",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                void handleExportFit();
+              }}
+              disabled={isExportingFit}
+              style={{
+                borderRadius: 8,
+                border: "1px solid rgba(148, 163, 184, 0.35)",
+                background: "rgba(30, 41, 59, 0.95)",
+                color: "#f8fafc",
+                padding: "0.5rem 0.8rem",
+                cursor: isExportingFit ? "wait" : "pointer",
+                fontWeight: 600,
+              }}
+            >
+              {isExportingFit ? "Export FIT en cours..." : "Exporter l'activite (.FIT)"}
+            </button>
+
+            {lastFitExportSummary && (
+              <p style={{ margin: "0.6rem 0 0", fontSize: "0.9rem" }}>
+                Export FIT genere: {lastFitExportSummary.pointCount} points | Duree: {lastFitExportSummary.durationSeconds.toFixed(1)} s | Distance: {lastFitExportSummary.distanceMeters.toFixed(0)} m | Taille: {(lastFitExportSummary.fileSizeBytes / 1024).toFixed(1)} KB
+              </p>
+            )}
+          </div>
+        )}
 
         <DashboardAdvanced
           averageSpeed={averageSpeed}

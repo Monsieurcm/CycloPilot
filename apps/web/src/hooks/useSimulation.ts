@@ -21,6 +21,15 @@ export type SimulationComparisonSnapshot = ReturnType<SimulationEngine["getCompa
 export type SimulationComparisonStats = ReturnType<SimulationEngine["getComparisonStats"]>;
 export type VirtualActivityState = ReturnType<SimulationEngine["getVirtualActivity"]>;
 export type EstimatedFutureFitSizeBytes = ReturnType<SimulationEngine["getEstimatedFutureFitSizeBytes"]>;
+export type FitValidationResult = Awaited<ReturnType<SimulationEngine["validateVirtualActivityFit"]>>;
+
+export interface FitExportResult {
+  file: ArrayBuffer;
+  validation: FitValidationResult;
+  pointCount: number;
+  durationSeconds: number;
+  distanceMeters: number;
+}
 
 const DEFAULT_BIKE_PROFILE: BikeProfile = {
   id: "road-bike",
@@ -85,6 +94,8 @@ export interface UseSimulationResult {
   virtualActivity: VirtualActivityState;
 
   estimatedFutureFitSizeBytes: EstimatedFutureFitSizeBytes;
+
+  exportVirtualActivityFit(): Promise<FitExportResult>;
 
   riderProfile: RiderProfile;
 
@@ -386,6 +397,20 @@ export function useSimulation(
     [engine, syncFromEngine]
   );
 
+  const exportVirtualActivityFit = useCallback(async (): Promise<FitExportResult> => {
+    const file = engine.exportVirtualActivityFitArrayBuffer();
+    const validation = await engine.validateVirtualActivityFit();
+    const activity = engine.getVirtualActivity();
+
+    return {
+      file,
+      validation,
+      pointCount: activity?.points.length ?? 0,
+      durationSeconds: activity?.currentState.elapsedTime ?? 0,
+      distanceMeters: activity?.currentState.traveledDistance ?? 0,
+    };
+  }, [engine]);
+
   return {
 
     metrics,
@@ -417,6 +442,8 @@ export function useSimulation(
     virtualActivity,
 
     estimatedFutureFitSizeBytes,
+
+    exportVirtualActivityFit,
 
     riderProfile,
 
