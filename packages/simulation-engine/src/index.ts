@@ -26,12 +26,37 @@ export interface RecordedRouteMetrics {
   speed?: number;
 }
 
+export interface ComparisonPair {
+  simulated?: number;
+  recorded?: number;
+  absoluteDifference?: number;
+  percentageDifference?: number;
+}
+
+export interface SimulationComparison {
+  speed: ComparisonPair;
+  power: ComparisonPair;
+  cadence: ComparisonPair;
+}
+
+export interface SimulationComparisonStats {
+  sampleCount: number;
+  averageSpeedErrorPercent?: number;
+  maxSpeedErrorPercent?: number;
+}
+
 export type SimulationPowerMode = "auto" | "fit" | "user" | "hybrid";
 export type SimulationPowerSource = "fit" | "user" | "none";
 
 interface ResolvedPower {
   power: number;
   source: SimulationPowerSource;
+}
+
+interface ComparisonAccumulator {
+  count: number;
+  sumPercent: number;
+  maxPercent: number;
 }
 
 type MetricsListener = (metrics: RideMetrics) => void;
@@ -62,6 +87,31 @@ function normalizeOptionalMetric(value: unknown): number | undefined {
   }
 
   return value;
+}
+
+function buildComparisonPair(simulated?: number, recorded?: number): ComparisonPair {
+  const normalizedSimulated = normalizeOptionalMetric(simulated);
+  const normalizedRecorded = normalizeOptionalMetric(recorded);
+
+  if (normalizedSimulated === undefined && normalizedRecorded === undefined) {
+    return {};
+  }
+
+  const absoluteDifference =
+    normalizedSimulated !== undefined && normalizedRecorded !== undefined
+      ? Math.abs(normalizedSimulated - normalizedRecorded)
+      : undefined;
+  const percentageDifference =
+    absoluteDifference !== undefined && normalizedRecorded !== undefined && normalizedRecorded > 0
+      ? (absoluteDifference / normalizedRecorded) * 100
+      : undefined;
+
+  return {
+    simulated: normalizedSimulated,
+    recorded: normalizedRecorded,
+    absoluteDifference,
+    percentageDifference,
+  };
 }
 
 function calculateProgress(routeLength: number, currentIndex: number): number {
@@ -150,6 +200,18 @@ export class SimulationEngine {
 
   private indexStepAccumulator = 0;
 
+  private comparison: SimulationComparison = {
+    speed: {},
+    power: {},
+    cadence: {},
+  };
+
+  private comparisonAccumulator: ComparisonAccumulator = {
+    count: 0,
+    sumPercent: 0,
+    maxPercent: 0,
+  };
+
   private readonly metricsListeners = new Set<MetricsListener>();
   private readonly stateListeners = new Set<StateListener>();
 
@@ -200,6 +262,37 @@ export class SimulationEngine {
       power: normalizeOptionalMetric(point.power),
       speed: normalizeOptionalMetric(point.speed),
     };
+  }
+
+  getComparisonSnapshot(): SimulationComparison {
+    return {
+      speed: { ...this.comparison.speed },
+      power: { ...this.comparison.power },
+      cadence: { ...this.comparison.cadence },
+    };
+  }
+
+  getComparisonStats(): SimulationComparisonStats {
+    if (this.comparisonAccumulator.count === 0) {
+      return { sampleCount: 0 };
+    }
+
+    return {
+      sampleCount: this.comparisonAccumulator.count,
+      averageSpeedErrorPercent: this.comparisonAccumulator.sumPercent / this.comparisonAccumulator.count,
+      maxSpeedErrorPercent: this.comparisonAccumulator.maxPercent,
+    };
+  }
+
+  hasRecordedComparisonData(): boolean {
+    return this.route.some((point) => {
+      const speed = normalizeOptionalMetric(point.fitMetrics?.speed ?? point.speed);
+      const power = normalizeOptionalMetric(point.fitMetrics?.power ?? point.power);
+      const cadence = normalizeOptionalMetric(point.fitMetrics?.cadence ?? point.cadence);
+      const heartRate = normalizeOptionalMetric(point.heartRate);
+
+      return speed !== undefined || power !== undefined || cadence !== undefined || heartRate !== undefined;
+    });
   }
 
   private getCurrentRecordedPower(): number | null {
@@ -304,6 +397,7 @@ export class SimulationEngine {
     this.state.currentIndex = DEFAULT_STATE.currentIndex;
     this.state.elapsedTime = DEFAULT_STATE.elapsedTime;
     this.indexStepAccumulator = 0;
+    this.resetComparisonState();
 
     this.refreshMetrics();
 
@@ -326,6 +420,7 @@ export class SimulationEngine {
     this.state.elapsedTime = DEFAULT_STATE.elapsedTime;
     this.state.currentIndex = DEFAULT_STATE.currentIndex;
     this.indexStepAccumulator = 0;
+    this.resetComparisonState();
 
     this.refreshMetrics();
 
@@ -472,6 +567,9 @@ export class SimulationEngine {
     this.state.currentIndex = DEFAULT_STATE.currentIndex;
     this.indexStepAccumulator = 0;
     this.activePowerSource = "none";
+    this.resetComparisonState();
+
+    this.refreshMetrics();
 
     this.emitMetrics();
     this.emitState();
@@ -529,11 +627,46 @@ export class SimulationEngine {
     if (!point) {
       this.metrics.distance = 0;
       this.metrics.elevation = 0;
+      this.comparison = {
+        speed: {},
+        power: {},
+        cadence: {},
+      };
       return;
     }
 
     this.metrics.distance = point.distance ?? 0;
     this.metrics.elevation = point.elevation ?? 0;
+
+    const recordedSpeed = normalizeOptionalMetric(point.fitMetrics?.speed ?? point.speed);
+    const recordedPower = normalizeOptionalMetric(point.fitMetrics?.power ?? point.power);
+    const recordedCadence = normalizeOptionalMetric(point.fitMetrics?.cadence ?? point.cadence);
+
+    this.comparison = {
+      speed: buildComparisonPair(this.metrics.speed, recordedSpeed !== undefined ? recordedSpeed * 3.6 : undefined),
+      power: buildComparisonPair(this.metrics.power, recordedPower),
+      cadence: buildComparisonPair(this.metrics.cadence, recordedCadence),
+    };
+
+    const speedError = this.comparison.speed.percentageDifference;
+    if (typeof speedError === "number" && Number.isFinite(speedError)) {
+      this.comparisonAccumulator.count += 1;
+      this.comparisonAccumulator.sumPercent += speedError;
+      this.comparisonAccumulator.maxPercent = Math.max(this.comparisonAccumulator.maxPercent, speedError);
+    }
+  }
+
+  private resetComparisonState(): void {
+    this.comparison = {
+      speed: {},
+      power: {},
+      cadence: {},
+    };
+    this.comparisonAccumulator = {
+      count: 0,
+      sumPercent: 0,
+      maxPercent: 0,
+    };
   }
 
 }

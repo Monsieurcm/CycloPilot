@@ -16,6 +16,8 @@ import type {
 
 export type RiderProfile = ReturnType<SimulationEngine["getRiderProfile"]>;
 export type RecordedRouteMetrics = ReturnType<SimulationEngine["getCurrentRecordedMetrics"]>;
+export type SimulationComparisonSnapshot = ReturnType<SimulationEngine["getComparisonSnapshot"]>;
+export type SimulationComparisonStats = ReturnType<SimulationEngine["getComparisonStats"]>;
 
 const DEFAULT_BIKE_PROFILE: BikeProfile = {
   id: "road-bike",
@@ -70,6 +72,12 @@ export interface UseSimulationResult {
   activePowerSource: SimulationPowerSource;
 
   recordedMetrics: RecordedRouteMetrics;
+
+  hasComparisonData: boolean;
+
+  comparisonSnapshot: SimulationComparisonSnapshot;
+
+  comparisonStats: SimulationComparisonStats;
 
   riderProfile: RiderProfile;
 
@@ -149,6 +157,15 @@ export function useSimulation(
   const [recordedMetrics, setRecordedMetrics] =
     useState<RecordedRouteMetrics>(engine.getCurrentRecordedMetrics());
 
+  const [hasComparisonData, setHasComparisonData] =
+    useState<boolean>(engine.hasRecordedComparisonData());
+
+  const [comparisonSnapshot, setComparisonSnapshot] =
+    useState<SimulationComparisonSnapshot>(engine.getComparisonSnapshot());
+
+  const [comparisonStats, setComparisonStats] =
+    useState<SimulationComparisonStats>(engine.getComparisonStats());
+
   const [riderProfile, setRiderProfileState] =
     useState<RiderProfile>(engine.getRiderProfile());
 
@@ -201,6 +218,9 @@ export function useSimulation(
     setHasRecordedPower(engine.hasRecordedPower());
     setActivePowerSource(engine.getActivePowerSource());
     setRecordedMetrics(engine.getCurrentRecordedMetrics());
+    setHasComparisonData(engine.hasRecordedComparisonData());
+    setComparisonSnapshot(engine.getComparisonSnapshot());
+    setComparisonStats(engine.getComparisonStats());
   }, [engine]);
 
   useEffect(() => {
@@ -340,6 +360,12 @@ export function useSimulation(
     activePowerSource,
 
     recordedMetrics,
+
+    hasComparisonData,
+
+    comparisonSnapshot,
+
+    comparisonStats,
 
     riderProfile,
 
