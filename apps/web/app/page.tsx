@@ -108,6 +108,7 @@ export default function HomePage() {
     powerMode,
     hasRecordedPower,
     activePowerSource,
+    recordedMetrics,
     riderProfile,
     elapsedTime,
     progress,
@@ -267,6 +268,11 @@ export default function HomePage() {
           remainingNegativeElevation={elevationBreakdown.negative}
           remainingTime={remainingTime}
           estimatedArrival={estimatedArrival}
+          currentCadence={recordedMetrics.cadence}
+          currentHeartRate={recordedMetrics.heartRate}
+          currentTemperature={recordedMetrics.temperature}
+          fitRecordedPower={recordedMetrics.power}
+          fitRecordedSpeed={recordedMetrics.speed}
         />
 
         <div

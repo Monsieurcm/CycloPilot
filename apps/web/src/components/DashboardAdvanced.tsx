@@ -17,6 +17,53 @@ interface DashboardAdvancedProps {
   remainingNegativeElevation: number;
   remainingTime: number;
   estimatedArrival?: Date;
+  currentCadence?: number;
+  currentHeartRate?: number;
+  currentTemperature?: number;
+  fitRecordedPower?: number;
+  fitRecordedSpeed?: number;
+}
+
+const MISSING_METRIC = "—";
+
+function formatRecordedCadence(value?: number): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return MISSING_METRIC;
+  }
+
+  return `${Math.round(value)} rpm`;
+}
+
+function formatRecordedHeartRate(value?: number): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return MISSING_METRIC;
+  }
+
+  return `${Math.round(value)} bpm`;
+}
+
+function formatRecordedTemperature(value?: number): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return MISSING_METRIC;
+  }
+
+  return `${Math.round(value)} °C`;
+}
+
+function formatRecordedPower(value?: number): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return MISSING_METRIC;
+  }
+
+  return `${Math.round(value)} W`;
+}
+
+function formatRecordedSpeed(value?: number): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return MISSING_METRIC;
+  }
+
+  return formatSpeed(value * 3.6);
 }
 
 export function DashboardAdvanced({
@@ -29,6 +76,11 @@ export function DashboardAdvanced({
   remainingNegativeElevation,
   remainingTime,
   estimatedArrival,
+  currentCadence,
+  currentHeartRate,
+  currentTemperature,
+  fitRecordedPower,
+  fitRecordedSpeed,
 }: DashboardAdvancedProps) {
   return (
     <div
@@ -61,6 +113,11 @@ export function DashboardAdvanced({
           estimatedArrival ? formatTime(estimatedArrival) : "Calculat..."
         }
       />
+      <DashboardCard label="Cadence actuelle" value={formatRecordedCadence(currentCadence)} />
+      <DashboardCard label="Frequence cardiaque" value={formatRecordedHeartRate(currentHeartRate)} />
+      <DashboardCard label="Temperature" value={formatRecordedTemperature(currentTemperature)} />
+      <DashboardCard label="Puissance FIT enregistree" value={formatRecordedPower(fitRecordedPower)} />
+      <DashboardCard label="Vitesse enregistree" value={formatRecordedSpeed(fitRecordedSpeed)} />
     </div>
   );
 }
