@@ -12,12 +12,14 @@ import type {
   BikeProfile,
   DifficultyLevel,
   GPXTrack,
+  VirtualActivity,
 } from "@cyclopilot/shared";
 
 export type RiderProfile = ReturnType<SimulationEngine["getRiderProfile"]>;
 export type RecordedRouteMetrics = ReturnType<SimulationEngine["getCurrentRecordedMetrics"]>;
 export type SimulationComparisonSnapshot = ReturnType<SimulationEngine["getComparisonSnapshot"]>;
 export type SimulationComparisonStats = ReturnType<SimulationEngine["getComparisonStats"]>;
+export type VirtualActivityState = ReturnType<SimulationEngine["getVirtualActivity"]>;
 
 const DEFAULT_BIKE_PROFILE: BikeProfile = {
   id: "road-bike",
@@ -78,6 +80,8 @@ export interface UseSimulationResult {
   comparisonSnapshot: SimulationComparisonSnapshot;
 
   comparisonStats: SimulationComparisonStats;
+
+  virtualActivity: VirtualActivityState;
 
   riderProfile: RiderProfile;
 
@@ -166,6 +170,9 @@ export function useSimulation(
   const [comparisonStats, setComparisonStats] =
     useState<SimulationComparisonStats>(engine.getComparisonStats());
 
+  const [virtualActivity, setVirtualActivity] =
+    useState<VirtualActivityState>(engine.getVirtualActivity());
+
   const [riderProfile, setRiderProfileState] =
     useState<RiderProfile>(engine.getRiderProfile());
 
@@ -199,14 +206,47 @@ export function useSimulation(
   const [estimatedArrival, setEstimatedArrival] =
     useState<Date>(engine.getEstimatedArrival());
 
+  const mapVirtualActivityCurrentPoint = useCallback((activity: VirtualActivity): GPXPoint | null => {
+    const position = activity.currentState.currentPosition;
+
+    if (!position) {
+      return null;
+    }
+
+    return {
+      lat: position.lat,
+      lon: position.lon,
+      elevation: position.altitude,
+      distance: position.distance,
+      gradient: activity.currentState.currentGradient,
+    };
+  }, []);
+
   const syncFromEngine = useCallback(() => {
-    setMetrics(engine.getMetrics());
+    const activity = engine.getVirtualActivity();
+    const engineMetrics = engine.getMetrics();
+
+    if (activity) {
+      setMetrics({
+        ...engineMetrics,
+        speed: activity.currentState.currentSpeed,
+        power: activity.currentState.currentPower,
+        distance: activity.currentState.traveledDistance,
+        elevation: activity.currentState.currentPosition?.altitude ?? engineMetrics.elevation,
+      });
+      setRoute(activity.route.originalRoute);
+      setCurrentPoint(mapVirtualActivityCurrentPoint(activity));
+    } else {
+      setMetrics(engineMetrics);
+      setRoute(engine.getRoute());
+      setCurrentPoint(engine.getCurrentPoint());
+    }
+
     setPlaying(engine.isPlaying());
     setPlaybackSpeed(engine.getSpeed());
     setElapsedTime(engine.getElapsedTime());
     setProgress(engine.getProgress());
-    setCurrentPoint(engine.getCurrentPoint());
-    setRoute(engine.getRoute());
+    setVirtualActivity(activity);
     setAverageSpeed(engine.getAverageSpeed());
     setMaxSpeed(engine.getMaxSpeed());
     setRemainingDistance(engine.getRemainingDistance());
@@ -221,7 +261,7 @@ export function useSimulation(
     setHasComparisonData(engine.hasRecordedComparisonData());
     setComparisonSnapshot(engine.getComparisonSnapshot());
     setComparisonStats(engine.getComparisonStats());
-  }, [engine]);
+  }, [engine, mapVirtualActivityCurrentPoint]);
 
   useEffect(() => {
 
@@ -366,6 +406,8 @@ export function useSimulation(
     comparisonSnapshot,
 
     comparisonStats,
+
+    virtualActivity,
 
     riderProfile,
 

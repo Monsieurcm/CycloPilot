@@ -112,6 +112,7 @@ export default function HomePage() {
     hasComparisonData,
     comparisonSnapshot,
     comparisonStats,
+    virtualActivity,
     riderProfile,
     elapsedTime,
     progress,
@@ -160,6 +161,13 @@ export default function HomePage() {
   const canChangeSpeed = hasRoute && !isImporting;
   const canChangePower = hasRoute && !isImporting;
   const displayPowerMode = powerMode === "hybrid" ? "auto" : powerMode;
+  const activityState = virtualActivity?.currentState;
+  const displayedElapsedTime = activityState?.elapsedTime ?? elapsedTime;
+  const displayedDistance = activityState?.traveledDistance ?? metrics.distance;
+  const displayedSpeed = activityState?.currentSpeed ?? metrics.speed;
+  const displayedPower = activityState?.currentPower ?? metrics.power;
+  const displayedElevation = activityState?.currentPosition?.altitude ?? metrics.elevation;
+  const recordedPointsCount = virtualActivity?.points.length ?? 0;
 
   return (
     <main
@@ -252,13 +260,28 @@ export default function HomePage() {
           }}
         >
           <StatCard label="Etat" value={getStateLabel(appState)} />
-          <StatCard label="Vitesse" value={`${metrics.speed.toFixed(1)} km/h`} />
+          <StatCard label="Vitesse" value={`${displayedSpeed.toFixed(1)} km/h`} />
           <StatCard label="Cadence" value={`${metrics.cadence.toFixed(0)} rpm`} />
-          <StatCard label="Puissance" value={`${metrics.power.toFixed(0)} W`} />
-          <StatCard label="Distance" value={`${metrics.distance.toFixed(0)} m`} />
-          <StatCard label="Elevation" value={`${metrics.elevation.toFixed(0)} m`} />
-          <StatCard label="Temps" value={`${elapsedTime.toFixed(1)} s`} />
+          <StatCard label="Puissance" value={`${displayedPower.toFixed(0)} W`} />
+          <StatCard label="Distance" value={`${displayedDistance.toFixed(0)} m`} />
+          <StatCard label="Elevation" value={`${displayedElevation.toFixed(0)} m`} />
+          <StatCard label="Temps" value={`${displayedElapsedTime.toFixed(1)} s`} />
           <StatCard label="Progression" value={`${(progress * 100).toFixed(0)} %`} />
+        </div>
+
+        <div
+          style={{
+            marginTop: "0.9rem",
+            borderRadius: "12px",
+            border: "1px solid rgba(148, 163, 184, 0.25)",
+            background: "rgba(15, 23, 42, 0.65)",
+            padding: "0.8rem 0.95rem",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: "0.8rem", opacity: 0.75 }}>Resume activite</p>
+          <p style={{ margin: "0.3rem 0 0", fontSize: "0.95rem" }}>
+            Duree simulee: {displayedElapsedTime.toFixed(1)} s | Distance parcourue: {displayedDistance.toFixed(0)} m | Points enregistres: {recordedPointsCount}
+          </p>
         </div>
 
         <DashboardAdvanced
