@@ -1,6 +1,13 @@
 import { applyRouteGradients, type GPXPoint } from "@cyclopilot/shared";
 import { fit2json, parseRecords } from "fit-decoder";
 
+export {
+  buildFitActivityStructure,
+  type FitActivityStructure,
+  type FitGeneratorOptions,
+  type FitRecordMessage,
+} from "./virtualActivityFitGenerator.js";
+
 interface ParsedFITRecord {
   type?: string;
   data?: Record<string, unknown>;
