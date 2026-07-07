@@ -113,6 +113,7 @@ export default function HomePage() {
     comparisonSnapshot,
     comparisonStats,
     virtualActivity,
+    estimatedFutureFitSizeBytes,
     riderProfile,
     elapsedTime,
     progress,
@@ -168,6 +169,7 @@ export default function HomePage() {
   const displayedPower = activityState?.currentPower ?? metrics.power;
   const displayedElevation = activityState?.currentPosition?.altitude ?? metrics.elevation;
   const recordedPointsCount = virtualActivity?.points.length ?? 0;
+  const estimatedFutureFitSizeKb = estimatedFutureFitSizeBytes / 1024;
 
   return (
     <main
@@ -280,7 +282,7 @@ export default function HomePage() {
         >
           <p style={{ margin: 0, fontSize: "0.8rem", opacity: 0.75 }}>Resume activite</p>
           <p style={{ margin: "0.3rem 0 0", fontSize: "0.95rem" }}>
-            Duree simulee: {displayedElapsedTime.toFixed(1)} s | Distance parcourue: {displayedDistance.toFixed(0)} m | Points enregistres: {recordedPointsCount}
+            Duree simulee: {displayedElapsedTime.toFixed(1)} s | Distance parcourue: {displayedDistance.toFixed(0)} m | Points enregistres: {recordedPointsCount} | Taille FIT estimee: {estimatedFutureFitSizeKb.toFixed(1)} KB
           </p>
         </div>
 

@@ -85,6 +85,10 @@ const DEFAULT_STATE: SimulationState = {
   currentIndex: 0,
 };
 
+const ESTIMATED_FIT_HEADER_BYTES = 14;
+const ESTIMATED_FIT_BASE_RECORD_BYTES = 28;
+const ESTIMATED_FIT_OPTIONAL_FIELD_BYTES = 4;
+
 function clampSimulationSpeed(speed: number): number {
   return Math.min(8, Math.max(0.5, speed));
 }
@@ -344,6 +348,28 @@ export class SimulationEngine {
       },
       points: [...this.virtualActivity.points],
     };
+  }
+
+  getEstimatedFutureFitSizeBytes(): number {
+    if (!this.virtualActivity) {
+      return 0;
+    }
+
+    const recordsSize = this.virtualActivity.points.reduce((size, point) => {
+      let recordSize = ESTIMATED_FIT_BASE_RECORD_BYTES;
+
+      if (typeof point.cadence === "number") {
+        recordSize += ESTIMATED_FIT_OPTIONAL_FIELD_BYTES;
+      }
+
+      if (typeof point.heartRate === "number") {
+        recordSize += ESTIMATED_FIT_OPTIONAL_FIELD_BYTES;
+      }
+
+      return size + recordSize;
+    }, 0);
+
+    return ESTIMATED_FIT_HEADER_BYTES + recordsSize;
   }
 
   private getCurrentRecordedPower(): number | null {

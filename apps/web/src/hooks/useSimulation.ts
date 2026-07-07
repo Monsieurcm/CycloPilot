@@ -20,6 +20,7 @@ export type RecordedRouteMetrics = ReturnType<SimulationEngine["getCurrentRecord
 export type SimulationComparisonSnapshot = ReturnType<SimulationEngine["getComparisonSnapshot"]>;
 export type SimulationComparisonStats = ReturnType<SimulationEngine["getComparisonStats"]>;
 export type VirtualActivityState = ReturnType<SimulationEngine["getVirtualActivity"]>;
+export type EstimatedFutureFitSizeBytes = ReturnType<SimulationEngine["getEstimatedFutureFitSizeBytes"]>;
 
 const DEFAULT_BIKE_PROFILE: BikeProfile = {
   id: "road-bike",
@@ -82,6 +83,8 @@ export interface UseSimulationResult {
   comparisonStats: SimulationComparisonStats;
 
   virtualActivity: VirtualActivityState;
+
+  estimatedFutureFitSizeBytes: EstimatedFutureFitSizeBytes;
 
   riderProfile: RiderProfile;
 
@@ -173,6 +176,9 @@ export function useSimulation(
   const [virtualActivity, setVirtualActivity] =
     useState<VirtualActivityState>(engine.getVirtualActivity());
 
+  const [estimatedFutureFitSizeBytes, setEstimatedFutureFitSizeBytes] =
+    useState<EstimatedFutureFitSizeBytes>(engine.getEstimatedFutureFitSizeBytes());
+
   const [riderProfile, setRiderProfileState] =
     useState<RiderProfile>(engine.getRiderProfile());
 
@@ -247,6 +253,7 @@ export function useSimulation(
     setElapsedTime(engine.getElapsedTime());
     setProgress(engine.getProgress());
     setVirtualActivity(activity);
+    setEstimatedFutureFitSizeBytes(engine.getEstimatedFutureFitSizeBytes());
     setAverageSpeed(engine.getAverageSpeed());
     setMaxSpeed(engine.getMaxSpeed());
     setRemainingDistance(engine.getRemainingDistance());
@@ -408,6 +415,8 @@ export function useSimulation(
     comparisonStats,
 
     virtualActivity,
+
+    estimatedFutureFitSizeBytes,
 
     riderProfile,
 
