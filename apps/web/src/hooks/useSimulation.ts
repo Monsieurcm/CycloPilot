@@ -21,6 +21,7 @@ export type SimulationComparisonSnapshot = ReturnType<SimulationEngine["getCompa
 export type SimulationComparisonStats = ReturnType<SimulationEngine["getComparisonStats"]>;
 export type VirtualActivityState = ReturnType<SimulationEngine["getVirtualActivity"]>;
 export type EstimatedFutureFitSizeBytes = ReturnType<SimulationEngine["getEstimatedFutureFitSizeBytes"]>;
+export type ActivitySummaryState = ReturnType<SimulationEngine["getActivitySummary"]>;
 export type FitValidationResult = Awaited<ReturnType<SimulationEngine["validateVirtualActivityFit"]>>;
 
 export interface FitExportResult {
@@ -92,6 +93,8 @@ export interface UseSimulationResult {
   comparisonStats: SimulationComparisonStats;
 
   virtualActivity: VirtualActivityState;
+
+  activitySummary: ActivitySummaryState;
 
   estimatedFutureFitSizeBytes: EstimatedFutureFitSizeBytes;
 
@@ -187,6 +190,9 @@ export function useSimulation(
   const [virtualActivity, setVirtualActivity] =
     useState<VirtualActivityState>(engine.getVirtualActivity());
 
+  const [activitySummary, setActivitySummary] =
+    useState<ActivitySummaryState>(engine.getActivitySummary());
+
   const [estimatedFutureFitSizeBytes, setEstimatedFutureFitSizeBytes] =
     useState<EstimatedFutureFitSizeBytes>(engine.getEstimatedFutureFitSizeBytes());
 
@@ -264,6 +270,7 @@ export function useSimulation(
     setElapsedTime(engine.getElapsedTime());
     setProgress(engine.getProgress());
     setVirtualActivity(activity);
+    setActivitySummary(engine.getActivitySummary());
     setEstimatedFutureFitSizeBytes(engine.getEstimatedFutureFitSizeBytes());
     setAverageSpeed(engine.getAverageSpeed());
     setMaxSpeed(engine.getMaxSpeed());
@@ -440,6 +447,8 @@ export function useSimulation(
     comparisonStats,
 
     virtualActivity,
+
+    activitySummary,
 
     estimatedFutureFitSizeBytes,
 

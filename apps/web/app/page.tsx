@@ -120,6 +120,7 @@ export default function HomePage() {
     comparisonSnapshot,
     comparisonStats,
     virtualActivity,
+    activitySummary,
     estimatedFutureFitSizeBytes,
     exportVirtualActivityFit,
     riderProfile,
@@ -322,6 +323,26 @@ export default function HomePage() {
             Duree simulee: {displayedElapsedTime.toFixed(1)} s | Distance parcourue: {displayedDistance.toFixed(0)} m | Points enregistres: {recordedPointsCount} | Taille FIT estimee: {estimatedFutureFitSizeKb.toFixed(1)} KB
           </p>
         </div>
+
+        {activitySummary && (
+          <div
+            style={{
+              marginTop: "0.9rem",
+              borderRadius: "12px",
+              border: "1px solid rgba(148, 163, 184, 0.25)",
+              background: "rgba(15, 23, 42, 0.65)",
+              padding: "0.8rem 0.95rem",
+            }}
+          >
+            <p style={{ margin: 0, fontSize: "0.8rem", opacity: 0.75 }}>Resume complet avant export</p>
+            <p style={{ margin: "0.3rem 0 0", fontSize: "0.95rem" }}>
+              Duree simulee: {activitySummary.durationSeconds.toFixed(1)} s | Distance: {activitySummary.distanceMeters.toFixed(0)} m | Vitesse moyenne: {activitySummary.averageSpeedKmh.toFixed(1)} km/h
+            </p>
+            <p style={{ margin: "0.25rem 0 0", fontSize: "0.95rem" }}>
+              Puissance moyenne: {activitySummary.averagePowerWatts.toFixed(0)} W | Denivele positif: {activitySummary.elevationGainMeters.toFixed(0)} m | Energie estimee: {activitySummary.estimatedEnergyKj.toFixed(1)} kJ | Calories estimees: {activitySummary.estimatedCaloriesKcal.toFixed(1)} kcal
+            </p>
+          </div>
+        )}
 
         {canExportFit && (
           <div

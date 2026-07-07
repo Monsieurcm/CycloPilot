@@ -58,6 +58,16 @@ export interface SimulationComparisonStats {
   maxSpeedErrorPercent?: number;
 }
 
+export interface SimulationActivitySummary {
+  durationSeconds: number;
+  distanceMeters: number;
+  averageSpeedKmh: number;
+  averagePowerWatts: number;
+  elevationGainMeters: number;
+  estimatedEnergyKj: number;
+  estimatedCaloriesKcal: number;
+}
+
 export type SimulationPowerMode = "auto" | "fit" | "user" | "hybrid";
 export type SimulationPowerSource = "fit" | "user" | "none";
 
@@ -388,6 +398,38 @@ export class SimulationEngine {
     }, 0);
 
     return ESTIMATED_FIT_HEADER_BYTES + recordsSize;
+  }
+
+  getActivitySummary(): SimulationActivitySummary | null {
+    if (!this.virtualActivity) {
+      return null;
+    }
+
+    const durationSeconds = Math.max(0, this.virtualActivity.currentState.elapsedTime);
+    const distanceMeters = Math.max(0, this.virtualActivity.currentState.traveledDistance);
+    const averageSpeedKmh = calculateAverageSpeed(distanceMeters, durationSeconds);
+    const elevationGainMeters = Math.max(0, this.virtualActivity.route.elevationGain);
+
+    const recordedPowers = this.virtualActivity.points
+      .map((point) => point.power)
+      .filter((value) => Number.isFinite(value) && value >= 0);
+
+    const averagePowerWatts = recordedPowers.length > 0
+      ? recordedPowers.reduce((sum, value) => sum + value, 0) / recordedPowers.length
+      : Math.max(0, this.virtualActivity.currentState.currentPower);
+
+    const estimatedEnergyKj = (averagePowerWatts * durationSeconds) / 1000;
+    const estimatedCaloriesKcal = estimatedEnergyKj / 4.184;
+
+    return {
+      durationSeconds,
+      distanceMeters,
+      averageSpeedKmh,
+      averagePowerWatts,
+      elevationGainMeters,
+      estimatedEnergyKj,
+      estimatedCaloriesKcal,
+    };
   }
 
   private getCurrentRecordedPower(): number | null {
