@@ -151,6 +151,8 @@ export interface ActivityPoint {
   power: number;
   gradient: number;
   cumulativeDistance: number;
+  cadence?: number;
+  heartRate?: number;
 }
 
 export interface VirtualActivity {
