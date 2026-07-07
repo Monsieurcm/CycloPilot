@@ -41,7 +41,11 @@ export interface GPXPoint {
   timestamp?: string;
   distance?: number; // Distance from start (meters)
   gradient?: number; // Segment gradient in percentage
+  cadence?: number; // Recorded cadence in rpm when available (FIT)
+  heartRate?: number; // Recorded heart rate in bpm when available (FIT)
+  temperature?: number; // Recorded ambient temperature in celsius when available (FIT)
   power?: number; // Recorded power in watts when available (FIT)
+  speed?: number; // Recorded speed in m/s when available (FIT)
 }
 
 export interface GPXSegment {

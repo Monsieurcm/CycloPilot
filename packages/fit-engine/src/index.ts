@@ -121,7 +121,11 @@ export function parseFITRoute(input: ArrayBuffer | Uint8Array): GPXPoint[] {
     const elevationRaw = toFiniteNumber(
       getDataField(record.data, ["enhanced_altitude", "altitude", "ele", "elevation"]),
     );
+    const cadenceRaw = toFiniteNumber(getDataField(record.data, ["cadence", "enhanced_cadence"]));
+    const heartRateRaw = toFiniteNumber(getDataField(record.data, ["heart_rate", "heartrate", "hr"]));
+    const temperatureRaw = toFiniteNumber(getDataField(record.data, ["temperature", "temp"]));
     const powerRaw = toFiniteNumber(getDataField(record.data, ["enhanced_power", "power"]));
+    const speedRaw = toFiniteNumber(getDataField(record.data, ["enhanced_speed", "speed"]));
     const timestamp = toTimestampString(getDataField(record.data, ["timestamp", "time"]));
 
     const deviceDistance = toFiniteNumber(getDataField(record.data, ["distance"]));
@@ -139,7 +143,11 @@ export function parseFITRoute(input: ArrayBuffer | Uint8Array): GPXPoint[] {
       elevation: elevationRaw ?? 0,
       distance: Math.round(cumulativeDistance),
       timestamp,
+      cadence: cadenceRaw !== null && cadenceRaw >= 0 ? Math.round(cadenceRaw) : undefined,
+      heartRate: heartRateRaw !== null && heartRateRaw >= 0 ? Math.round(heartRateRaw) : undefined,
+      temperature: temperatureRaw !== null ? Math.round(temperatureRaw) : undefined,
       power: powerRaw !== null && powerRaw >= 0 ? Math.round(powerRaw) : undefined,
+      speed: speedRaw !== null && speedRaw >= 0 ? speedRaw : undefined,
     });
   }
 
