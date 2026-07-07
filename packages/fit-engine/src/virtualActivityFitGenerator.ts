@@ -76,6 +76,12 @@ export interface FitEventMessage {
   eventGroup: number;
 }
 
+export interface FitSportMessage {
+  sport: number;
+  subSport: number;
+  name: string;
+}
+
 export interface FitWorkoutMessage {
   name: string;
   sport: number;
@@ -137,8 +143,10 @@ export interface FitRecordMessage {
 export interface FitActivityStructure {
   fileId: FitFileIdMessage;
   deviceInfo: FitDeviceInfoMessage;
+  sport: FitSportMessage;
   workout: FitWorkoutMessage;
   startEvent: FitEventMessage;
+  sessionStopEvent: FitEventMessage;
   stopEvent: FitEventMessage;
   lap: FitLapMessage;
   session: FitSessionMessage;
@@ -156,10 +164,12 @@ export interface FitGeneratorOptions {
   sport: number;
   subSport: number;
   timerEvent: number;
+  sessionEvent: number;
   activityEvent: number;
   activityType: number;
   eventTypeStart: number;
   eventTypeStopAll: number;
+  eventTypeStopDisableAll: number;
   eventTypeStop: number;
 }
 
@@ -227,6 +237,13 @@ export function buildFitActivityStructure(
     eventGroup: 0,
   };
 
+  const sessionStopEvent: FitEventMessage = {
+    timestamp: endTime,
+    event: options.sessionEvent,
+    eventType: options.eventTypeStopDisableAll,
+    eventGroup: 0,
+  };
+
   const stopEvent: FitEventMessage = {
     timestamp: endTime,
     event: options.timerEvent,
@@ -238,6 +255,12 @@ export function buildFitActivityStructure(
     name: activity.metadata.name || "Virtual Activity",
     sport: options.sport,
     subSport: options.subSport,
+  };
+
+  const sport: FitSportMessage = {
+    sport: options.sport,
+    subSport: options.subSport,
+    name: activity.metadata.name || "Virtual Activity",
   };
 
   const lapBase: FitLapMessage = {
@@ -283,8 +306,10 @@ export function buildFitActivityStructure(
   return {
     fileId,
     deviceInfo,
+    sport,
     workout,
     startEvent,
+    sessionStopEvent,
     stopEvent,
     lap: lapBase,
     session,

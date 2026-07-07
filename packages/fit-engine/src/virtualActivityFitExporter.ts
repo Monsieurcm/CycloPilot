@@ -16,10 +16,12 @@ const DEFAULT_GENERATOR_OPTIONS: FitGeneratorOptions = {
   sport: FitConstants.sport.cycling,
   subSport: FitConstants.sub_sport.road,
   timerEvent: FitConstants.event.timer,
+  sessionEvent: FitConstants.event.session,
   activityEvent: FitConstants.event.activity,
   activityType: FitConstants.activity.manual,
   eventTypeStart: FitConstants.event_type.start,
   eventTypeStopAll: FitConstants.event_type.stop_all,
+  eventTypeStopDisableAll: FitConstants.event_type.stop_disable_all,
   eventTypeStop: FitConstants.event_type.stop,
   softwareVersion: 100,
 };
@@ -54,12 +56,14 @@ class VirtualActivityFitEncoder extends FitEncoder {
   encode(): ArrayBuffer {
     this.writeFileId();
     this.writeDeviceInfo();
+    this.writeSport();
     this.writeWorkout();
     this.writeStartEvent();
     this.writeRecords();
     this.writeLap();
     this.writeSession();
     this.writeStopEvent();
+    this.writeSessionStopEvent();
     this.writeActivity();
 
     return this.getFile() as ArrayBuffer;
@@ -75,6 +79,18 @@ class VirtualActivityFitEncoder extends FitEncoder {
       "sport",
       "sub_sport",
     ).writeDataMessage(m.name, m.sport, m.subSport);
+  }
+
+  private writeSport(): void {
+    const m = this.activityStructure.sport;
+
+    new Message(
+      FitConstants.mesg_num.sport,
+      FitMessages.sport,
+      "sport",
+      "sub_sport",
+      "name",
+    ).writeDataMessage(m.sport, m.subSport, m.name);
   }
 
   private writeFileId(): void {
@@ -129,6 +145,19 @@ class VirtualActivityFitEncoder extends FitEncoder {
 
   private writeStopEvent(): void {
     const m = this.activityStructure.stopEvent;
+
+    new Message(
+      FitConstants.mesg_num.event,
+      FitMessages.event,
+      "timestamp",
+      "event",
+      "event_type",
+      "event_group",
+    ).writeDataMessage(m.timestamp, m.event, m.eventType, m.eventGroup);
+  }
+
+  private writeSessionStopEvent(): void {
+    const m = this.activityStructure.sessionStopEvent;
 
     new Message(
       FitConstants.mesg_num.event,
