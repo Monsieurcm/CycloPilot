@@ -143,6 +143,12 @@ export function parseFITRoute(input: ArrayBuffer | Uint8Array): GPXPoint[] {
       elevation: elevationRaw ?? 0,
       distance: Math.round(cumulativeDistance),
       timestamp,
+      fitMetrics: {
+        speed: speedRaw !== null && speedRaw >= 0 ? speedRaw : undefined,
+        cadence: cadenceRaw !== null && cadenceRaw >= 0 ? Math.round(cadenceRaw) : undefined,
+        heartRate: heartRateRaw !== null && heartRateRaw >= 0 ? Math.round(heartRateRaw) : undefined,
+        power: powerRaw !== null && powerRaw >= 0 ? Math.round(powerRaw) : undefined,
+      },
       cadence: cadenceRaw !== null && cadenceRaw >= 0 ? Math.round(cadenceRaw) : undefined,
       heartRate: heartRateRaw !== null && heartRateRaw >= 0 ? Math.round(heartRateRaw) : undefined,
       temperature: temperatureRaw !== null ? Math.round(temperatureRaw) : undefined,
