@@ -10,7 +10,8 @@
     "build": "tsc",
     "lint": "eslint src/**/*.ts",
     "typecheck": "tsc --noEmit --skipLibCheck",
-    "validate:fit:technical": "node dist/validation/runTechnicalValidation.js"
+    "validate:fit:technical": "node dist/validation/runTechnicalValidation.js",
+    "validate:fit:platform": "node dist/validation/runPlatformValidation.js"
   },
   "dependencies": {
     "@cyclopilot/shared": "workspace:*",

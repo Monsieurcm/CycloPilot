@@ -1,0 +1,104 @@
+{
+  "generatedAt": "2026-07-07T03:56:54.470Z",
+  "sourceDir": "/workspaces/CycloPilot/exports/pr19-1/technical",
+  "scenarios": [
+    {
+      "file": "/workspaces/CycloPilot/exports/pr19-1/technical/short.fit",
+      "recordCount": 25,
+      "hasDistance": true,
+      "hasDuration": true,
+      "hasGps": true,
+      "hasAltitude": true,
+      "hasPower": true,
+      "hasSpeed": true
+    },
+    {
+      "file": "/workspaces/CycloPilot/exports/pr19-1/technical/long.fit",
+      "recordCount": 600,
+      "hasDistance": true,
+      "hasDuration": true,
+      "hasGps": true,
+      "hasAltitude": true,
+      "hasPower": true,
+      "hasSpeed": true
+    },
+    {
+      "file": "/workspaces/CycloPilot/exports/pr19-1/technical/flat.fit",
+      "recordCount": 180,
+      "hasDistance": true,
+      "hasDuration": true,
+      "hasGps": true,
+      "hasAltitude": true,
+      "hasPower": true,
+      "hasSpeed": true
+    },
+    {
+      "file": "/workspaces/CycloPilot/exports/pr19-1/technical/hilly.fit",
+      "recordCount": 240,
+      "hasDistance": true,
+      "hasDuration": true,
+      "hasGps": true,
+      "hasAltitude": true,
+      "hasPower": true,
+      "hasSpeed": true
+    }
+  ],
+  "platforms": [
+    {
+      "platform": "Strava",
+      "liveImportTestExecuted": false,
+      "accepted": false,
+      "warning": "Live import not executable in this environment (no account session/API token).",
+      "dataRecognized": {
+        "distance": true,
+        "duration": true,
+        "gps": true,
+        "altitude": true,
+        "power": true,
+        "speed": true
+      }
+    },
+    {
+      "platform": "Garmin Connect",
+      "liveImportTestExecuted": false,
+      "accepted": false,
+      "warning": "Live import not executable in this environment (no account session/API token).",
+      "dataRecognized": {
+        "distance": true,
+        "duration": true,
+        "gps": true,
+        "altitude": true,
+        "power": true,
+        "speed": true
+      }
+    },
+    {
+      "platform": "Intervals.icu",
+      "liveImportTestExecuted": false,
+      "accepted": false,
+      "warning": "Live import not executable in this environment (no account session/API token).",
+      "dataRecognized": {
+        "distance": true,
+        "duration": true,
+        "gps": true,
+        "altitude": true,
+        "power": true,
+        "speed": true
+      }
+    },
+    {
+      "platform": "GoldenCheetah",
+      "liveImportTestExecuted": false,
+      "accepted": false,
+      "warning": "Live import not executable in this environment (no account session/API token).",
+      "dataRecognized": {
+        "distance": true,
+        "duration": true,
+        "gps": true,
+        "altitude": true,
+        "power": true,
+        "speed": true
+      }
+    }
+  ]
+}
