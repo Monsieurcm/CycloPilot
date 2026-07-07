@@ -44,6 +44,21 @@ interface ParsedFitFile {
   messages: ParsedFitMessage[];
 }
 
+export interface RawParsedFitMessage {
+  globalMessageNumber: number;
+  fields: Map<number, number>;
+}
+
+export interface RawParsedFitFile {
+  headerSize: number;
+  dataSize: number;
+  expectedDataCrc: number;
+  actualDataCrc: number;
+  expectedHeaderCrc: number | null;
+  actualHeaderCrc: number | null;
+  messages: RawParsedFitMessage[];
+}
+
 export interface TechnicalScenarioResult {
   scenario: string;
   fileName: string;
@@ -163,6 +178,10 @@ function parseFitFile(bytes: Uint8Array): ParsedFitFile {
     actualHeaderCrc,
     messages,
   };
+}
+
+export function parseFitFileForValidation(bytes: Uint8Array): RawParsedFitFile {
+  return parseFitFile(bytes);
 }
 
 function parseFitMessages(data: Uint8Array): ParsedFitMessage[] {

@@ -7,8 +7,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && pnpm test",
     "lint": "eslint src/**/*.ts",
+    "test": "node --test dist/validation/*.test.js",
     "typecheck": "tsc --noEmit --skipLibCheck",
     "validate:fit:technical": "node dist/validation/runTechnicalValidation.js",
     "validate:fit:platform": "node dist/validation/runPlatformValidation.js"
