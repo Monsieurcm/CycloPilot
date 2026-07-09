@@ -20,17 +20,17 @@ type AppSimulationState =
 function getStateMessage(state: AppSimulationState): string {
   switch (state) {
     case "no-route":
-      return "Aucun parcours charge. Importez un fichier GPX pour commencer.";
+      return "Aucun parcours chargé. Importez un fichier GPX pour commencer.";
     case "loading":
       return "Chargement du parcours en cours...";
     case "route-loaded":
-      return "Parcours charge. Vous pouvez lancer la simulation.";
+      return "Parcours chargé. Vous pouvez lancer la simulation.";
     case "running":
       return "Simulation en cours.";
     case "finished":
-      return "Simulation terminee. Appuyez sur Stop pour recommencer.";
+      return "Simulation terminée. Appuyez sur Stop pour recommencer.";
     default:
-      return "Etat inconnu.";
+      return "État inconnu.";
   }
 }
 
@@ -41,14 +41,37 @@ function getStateLabel(state: AppSimulationState): string {
     case "loading":
       return "Chargement";
     case "route-loaded":
-      return "Parcours charge";
+      return "Parcours chargé";
     case "running":
       return "Simulation en cours";
     case "finished":
-      return "Simulation terminee";
+      return "Simulation terminée";
     default:
       return "Inconnu";
   }
+}
+
+function getRouteElevationBreakdown(route: GPXPoint[]): { positive: number; negative: number } {
+  if (route.length <= 1) {
+    return { positive: 0, negative: 0 };
+  }
+
+  let positive = 0;
+  let negative = 0;
+
+  for (let i = 0; i < route.length - 1; i++) {
+    const fromElevation = route[i].elevation ?? 0;
+    const toElevation = route[i + 1].elevation ?? 0;
+    const delta = toElevation - fromElevation;
+
+    if (delta > 0) {
+      positive += delta;
+    } else if (delta < 0) {
+      negative += Math.abs(delta);
+    }
+  }
+
+  return { positive, negative };
 }
 
 export default function HomePage() {
@@ -114,6 +137,10 @@ export default function HomePage() {
   const displayedPower = activityState?.currentPower ?? metrics.power;
   const displayedElevation = activityState?.currentPosition?.altitude ?? metrics.elevation;
   const currentGradient = currentPoint?.gradient ?? 0;
+  const totalElevationBreakdown = getRouteElevationBreakdown(route);
+  const displayedElevationBreakdown = progress > 0
+    ? remainingElevationBreakdown
+    : totalElevationBreakdown;
 
   const appState: AppSimulationState = isImporting
     ? "loading"
@@ -193,7 +220,7 @@ export default function HomePage() {
       >
         <h1 style={{ marginTop: 0 }}>CycloPilot Simulation</h1>
         <p style={{ marginTop: 0, opacity: 0.9 }}>
-          Simulation GPS avec suivi d'etat et controles contextuels.
+          Simulation GPS avec suivi d'état et contrôles contextuels.
         </p>
 
         <div
@@ -206,7 +233,7 @@ export default function HomePage() {
           }}
         >
           <p style={{ margin: 0, fontSize: "0.85rem", opacity: 0.8 }}>
-            Etat de l'application
+            État de l'application
           </p>
           <p style={{ margin: "0.35rem 0 0", fontWeight: 650 }}>
             {getStateMessage(appState)}
@@ -260,12 +287,12 @@ export default function HomePage() {
             gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
           }}
         >
-          <StatCard label="Etat" value={getStateLabel(appState)} />
+          <StatCard label="État" value={getStateLabel(appState)} />
           <StatCard label="Vitesse" value={`${displayedSpeed.toFixed(1)} km/h`} />
           <StatCard label="Cadence" value={`${metrics.cadence.toFixed(0)} rpm`} />
           <StatCard label="Puissance" value={`${displayedPower.toFixed(0)} W`} />
           <StatCard label="Distance" value={`${displayedDistance.toFixed(0)} m`} />
-          <StatCard label="Elevation" value={`${displayedElevation.toFixed(0)} m`} />
+          <StatCard label="Élévation" value={`${displayedElevation.toFixed(0)} m`} />
           <StatCard label="Temps" value={`${displayedElapsedTime.toFixed(1)} s`} />
           <StatCard label="Progression" value={`${(progress * 100).toFixed(0)} %`} />
         </div>
@@ -279,9 +306,9 @@ export default function HomePage() {
             padding: "0.8rem 0.95rem",
           }}
         >
-          <p style={{ margin: 0, fontSize: "0.8rem", opacity: 0.75 }}>Resume activite</p>
+          <p style={{ margin: 0, fontSize: "0.8rem", opacity: 0.75 }}>Résumé activité</p>
           <p style={{ margin: "0.3rem 0 0", fontSize: "0.95rem" }}>
-            Duree simulee: {displayedElapsedTime.toFixed(1)} s | Distance parcourue: {displayedDistance.toFixed(0)} m | Points enregistres: {recordedPointsCount} | Taille FIT estimee: {estimatedFutureFitSizeKb.toFixed(1)} KB
+            Durée simulée: {displayedElapsedTime.toFixed(1)} s | Distance parcourue: {displayedDistance.toFixed(0)} m | Points enregistrés: {recordedPointsCount} | Taille FIT estimée: {estimatedFutureFitSizeKb.toFixed(1)} KB
           </p>
         </div>
 
@@ -295,12 +322,12 @@ export default function HomePage() {
               padding: "0.8rem 0.95rem",
             }}
           >
-            <p style={{ margin: 0, fontSize: "0.8rem", opacity: 0.75 }}>Resume complet avant export</p>
+            <p style={{ margin: 0, fontSize: "0.8rem", opacity: 0.75 }}>Résumé complet avant export</p>
             <p style={{ margin: "0.3rem 0 0", fontSize: "0.95rem" }}>
-              Duree simulee: {activitySummary.durationSeconds.toFixed(1)} s | Distance: {activitySummary.distanceMeters.toFixed(0)} m | Vitesse moyenne: {activitySummary.averageSpeedKmh.toFixed(1)} km/h
+              Durée simulée: {activitySummary.durationSeconds.toFixed(1)} s | Distance: {activitySummary.distanceMeters.toFixed(0)} m | Vitesse moyenne: {activitySummary.averageSpeedKmh.toFixed(1)} km/h
             </p>
             <p style={{ margin: "0.25rem 0 0", fontSize: "0.95rem" }}>
-              Puissance moyenne: {activitySummary.averagePowerWatts.toFixed(0)} W | Denivele positif: {activitySummary.elevationGainMeters.toFixed(0)} m | Energie estimee: {activitySummary.estimatedEnergyKj.toFixed(1)} kJ | Calories estimees: {activitySummary.estimatedCaloriesKcal.toFixed(1)} kcal
+              Puissance moyenne: {activitySummary.averagePowerWatts.toFixed(0)} W | Dénivelé positif: {activitySummary.elevationGainMeters.toFixed(0)} m | Énergie estimée: {activitySummary.estimatedEnergyKj.toFixed(1)} kJ | Calories estimées: {activitySummary.estimatedCaloriesKcal.toFixed(1)} kcal
             </p>
           </div>
         )}
@@ -331,7 +358,7 @@ export default function HomePage() {
                 fontWeight: 600,
               }}
             >
-              {isExportingFit ? "Export FIT en cours..." : "Exporter l'activite (.FIT)"}
+              {isExportingFit ? "Export FIT en cours..." : "Exporter l'activité (.FIT)"}
             </button>
 
             {fitExportError && (
@@ -343,13 +370,13 @@ export default function HomePage() {
             {lastFitExportSummary && (
               <div style={{ marginTop: "0.6rem" }}>
                 <p style={{ margin: 0, fontSize: "0.95rem", fontWeight: 650, color: "#86efac" }}>
-                  Export FIT reussi.
+                  Export FIT réussi.
                 </p>
                 <p style={{ margin: "0.2rem 0 0", fontSize: "0.9rem" }}>
-                  Fichier cree: {lastFitExportSummary.fileName}
+                  Fichier créé: {lastFitExportSummary.fileName}
                 </p>
                 <p style={{ margin: "0.2rem 0 0", fontSize: "0.9rem" }}>
-                  Points exportes: {lastFitExportSummary.pointCount} | Duree: {lastFitExportSummary.durationSeconds.toFixed(1)} s | Distance: {lastFitExportSummary.distanceMeters.toFixed(0)} m | Taille: {(lastFitExportSummary.fileSizeBytes / 1024).toFixed(1)} KB
+                  Points exportés: {lastFitExportSummary.pointCount} | Durée: {lastFitExportSummary.durationSeconds.toFixed(1)} s | Distance: {lastFitExportSummary.distanceMeters.toFixed(0)} m | Taille: {(lastFitExportSummary.fileSizeBytes / 1024).toFixed(1)} KB
                 </p>
                 <button
                   type="button"
@@ -381,8 +408,8 @@ export default function HomePage() {
           maxSpeed={maxSpeed}
           remainingDistance={remainingDistance}
           currentGradient={currentGradient}
-          remainingPositiveElevation={remainingElevationBreakdown.positive}
-          remainingNegativeElevation={remainingElevationBreakdown.negative}
+          remainingPositiveElevation={displayedElevationBreakdown.positive}
+          remainingNegativeElevation={displayedElevationBreakdown.negative}
           remainingTime={remainingTime}
           estimatedArrival={estimatedArrival}
           currentCadence={recordedMetrics.cadence}

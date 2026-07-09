@@ -187,7 +187,7 @@ export function DashboardAdvanced({
           value={formatDistance(remainingDistance)}
         />
         <DashboardCard
-          label="Dénivelé restant"
+          label="Dénivelé +/-"
           value={`${Math.round(remainingPositiveElevation)} m + / ${Math.round(remainingNegativeElevation)} m -`}
         />
         <DashboardCard
@@ -201,10 +201,10 @@ export function DashboardAdvanced({
           }
         />
         <DashboardCard label="Cadence actuelle" value={formatRecordedCadence(currentCadence)} />
-        <DashboardCard label="Frequence cardiaque" value={formatRecordedHeartRate(currentHeartRate)} />
-        <DashboardCard label="Temperature" value={formatRecordedTemperature(currentTemperature)} />
-        <DashboardCard label="Puissance FIT enregistree" value={formatRecordedPower(fitRecordedPower)} />
-        <DashboardCard label="Vitesse enregistree" value={formatRecordedSpeed(fitRecordedSpeed)} />
+        <DashboardCard label="Fréquence cardiaque" value={formatRecordedHeartRate(currentHeartRate)} />
+        <DashboardCard label="Température" value={formatRecordedTemperature(currentTemperature)} />
+        <DashboardCard label="Puissance FIT enregistrée" value={formatRecordedPower(fitRecordedPower)} />
+        <DashboardCard label="Vitesse enregistrée" value={formatRecordedSpeed(fitRecordedSpeed)} />
       </div>
 
       {comparisonAvailable && (
@@ -239,7 +239,7 @@ export function DashboardAdvanced({
                 cursor: "pointer",
               }}
             >
-              {comparisonEnabled ? "Desactiver" : "Activer"}
+              {comparisonEnabled ? "Désactiver" : "Activer"}
             </button>
           </div>
 
@@ -257,11 +257,11 @@ export function DashboardAdvanced({
                 value={formatOptionalSpeed(comparison?.speed?.recorded)}
               />
               <DashboardCard
-                label="Vitesse simulee"
+                label="Vitesse simulée"
                 value={formatOptionalSpeed(comparison?.speed?.simulated)}
               />
               <DashboardCard
-                label="Difference vitesse"
+                label="Différence vitesse"
                 value={formatOptionalDiffKmh(comparison?.speed?.absoluteDifference)}
               />
               <DashboardCard
@@ -277,7 +277,7 @@ export function DashboardAdvanced({
                 value={formatOptionalPower(comparison?.power?.simulated)}
               />
               <DashboardCard
-                label="Frequence cardiaque"
+                label="Fréquence cardiaque"
                 value={formatRecordedHeartRate(currentHeartRate)}
               />
               <DashboardCard
@@ -293,13 +293,13 @@ export function DashboardAdvanced({
                 value={formatOptionalPercent(comparisonStats?.maxSpeedErrorPercent)}
               />
               <DashboardCard
-                label="Qualite"
+                label="Qualité"
                 value={getComparisonIndicator(comparisonStats?.averageSpeedErrorPercent)}
               />
             </div>
           ) : (
             <p style={{ margin: "0.75rem 0 0", opacity: 0.8 }}>
-              Mode comparaison desactive.
+              Mode comparaison désactivé.
             </p>
           )}
         </section>
