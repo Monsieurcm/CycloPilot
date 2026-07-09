@@ -32,7 +32,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 10.12.1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -48,11 +48,11 @@ jobs:
           echo "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY present: ${{ env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY != '' }}"
           echo "NEXT_PUBLIC_GOOGLE_MAPS_API_URL present: ${{ env.NEXT_PUBLIC_GOOGLE_MAPS_API_URL != '' }}"
         env:
-          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ inputs.google_maps_api_key || vars.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ inputs.google_maps_api_key || vars.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'DIAGNOSTIC_NON_EMPTY_KEY' }}
           NEXT_PUBLIC_GOOGLE_MAPS_API_URL: ${{ inputs.google_maps_api_url || vars.NEXT_PUBLIC_GOOGLE_MAPS_API_URL || secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_URL }}
 
       - name: Build web app (diagnostic)
         run: pnpm --filter @cyclopilot/web build
         env:
-          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ inputs.google_maps_api_key || vars.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ inputs.google_maps_api_key || vars.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'DIAGNOSTIC_NON_EMPTY_KEY' }}
           NEXT_PUBLIC_GOOGLE_MAPS_API_URL: ${{ inputs.google_maps_api_url || vars.NEXT_PUBLIC_GOOGLE_MAPS_API_URL || secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_URL }}
