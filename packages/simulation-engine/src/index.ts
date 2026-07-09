@@ -67,6 +67,11 @@ export interface SimulationActivitySummary {
   estimatedCaloriesKcal: number;
 }
 
+export interface RemainingElevationBreakdown {
+  positive: number;
+  negative: number;
+}
+
 export type SimulationPowerMode = "auto" | "fit" | "user" | "hybrid";
 export type SimulationPowerSource = "fit" | "user" | "none";
 
@@ -170,23 +175,33 @@ function calculateRemainingDistance(route: GPXPoint[], currentDistance: number):
   return Math.max(0, totalDistance - currentDistance);
 }
 
-function calculateRemainingElevation(route: GPXPoint[], currentIndex: number): number {
+function calculateRemainingElevationBreakdown(
+  route: GPXPoint[],
+  currentIndex: number,
+): RemainingElevationBreakdown {
   if (route.length === 0 || currentIndex >= route.length) {
-    return 0;
+    return { positive: 0, negative: 0 };
   }
 
-  let elevationGain = 0;
+  let positive = 0;
+  let negative = 0;
+
   for (let i = currentIndex; i < route.length - 1; i++) {
     const nextElevation = route[i + 1].elevation ?? 0;
     const currentElevation = route[i].elevation ?? 0;
-    const gain = nextElevation - currentElevation;
+    const delta = nextElevation - currentElevation;
 
-    if (gain > 0) {
-      elevationGain += gain;
+    if (delta > 0) {
+      positive += delta;
+    } else if (delta < 0) {
+      negative += Math.abs(delta);
     }
   }
 
-  return Math.max(0, elevationGain);
+  return {
+    positive: Math.max(0, positive),
+    negative: Math.max(0, negative),
+  };
 }
 
 function calculateRemainingTimeSeconds(speedKmh: number, remainingDistanceMeters: number): number {
@@ -211,6 +226,89 @@ function calculateEstimatedArrivalDate(remainingSeconds: number): Date {
   return new Date(Date.now() + remainingSeconds * 1000);
 }
 
+function clampDistance(route: GPXPoint[], distanceMeters: number): number {
+  if (route.length === 0) {
+    return 0;
+  }
+
+  const totalDistance = route[route.length - 1]?.distance ?? 0;
+  return Math.min(Math.max(0, distanceMeters), totalDistance);
+}
+
+function findRouteIndexForDistance(
+  route: GPXPoint[],
+  targetDistance: number,
+  startIndex = 0,
+): number {
+  if (route.length === 0) {
+    return 0;
+  }
+
+  const clampedDistance = clampDistance(route, targetDistance);
+
+  for (let i = Math.max(0, startIndex); i < route.length - 1; i++) {
+    const nextDistance = route[i + 1]?.distance ?? route[i]?.distance ?? 0;
+
+    if (clampedDistance < nextDistance) {
+      return i;
+    }
+  }
+
+  return route.length - 1;
+}
+
+function interpolateRoutePointAtDistance(
+  route: GPXPoint[],
+  targetDistance: number,
+  startIndex = 0,
+): GPXPoint | null {
+  if (route.length === 0) {
+    return null;
+  }
+
+  if (route.length === 1) {
+    return {
+      ...route[0],
+      distance: route[0].distance ?? 0,
+    };
+  }
+
+  const clampedDistance = clampDistance(route, targetDistance);
+  const boundedStartIndex = Math.max(0, Math.min(startIndex, route.length - 1));
+
+  for (let i = boundedStartIndex; i < route.length - 1; i++) {
+    const currentPoint = route[i];
+    const nextPoint = route[i + 1];
+    const currentDistance = currentPoint.distance ?? 0;
+    const nextDistance = nextPoint.distance ?? currentDistance;
+
+    if (clampedDistance > nextDistance) {
+      continue;
+    }
+
+    const span = nextDistance - currentDistance;
+    const ratio = span > 0 ? (clampedDistance - currentDistance) / span : 0;
+    const gradient = typeof currentPoint.gradient === "number"
+      ? currentPoint.gradient
+      : calculateGradePercent({ currentPoint, nextPoint });
+
+    return {
+      ...currentPoint,
+      lat: currentPoint.lat + (nextPoint.lat - currentPoint.lat) * ratio,
+      lon: currentPoint.lon + (nextPoint.lon - currentPoint.lon) * ratio,
+      elevation: currentPoint.elevation + (nextPoint.elevation - currentPoint.elevation) * ratio,
+      distance: clampedDistance,
+      gradient,
+    };
+  }
+
+  const lastPoint = route[route.length - 1];
+  return {
+    ...lastPoint,
+    distance: lastPoint.distance ?? 0,
+  };
+}
+
 export class SimulationEngine {
   private readonly config: SimulationConfig;
   private riderProfile: RiderPhysicsProfile;
@@ -223,8 +321,6 @@ export class SimulationEngine {
   private metrics: RideMetrics = { ...DEFAULT_METRICS };
 
   private state: SimulationState = { ...DEFAULT_STATE };
-
-  private indexStepAccumulator = 0;
 
   private comparison: SimulationComparison = {
     speed: {},
@@ -239,6 +335,8 @@ export class SimulationEngine {
   };
 
   private virtualActivity: VirtualActivity | null = null;
+
+  private maxSpeedKmh = 0;
 
   private lastActivityPointTimestampMs = 0;
 
@@ -442,6 +540,17 @@ export class SimulationEngine {
     return null;
   }
 
+  private getCurrentRecordedSpeedMs(): number {
+    const point = this.getCurrentPoint();
+    const pointSpeed = point?.fitMetrics?.speed ?? point?.speed;
+
+    if (typeof pointSpeed === "number" && Number.isFinite(pointSpeed) && pointSpeed >= 0) {
+      return pointSpeed;
+    }
+
+    return 0;
+  }
+
   private resolvePower(userPower: number): ResolvedPower {
     const normalizedUserPower = Number.isFinite(userPower) && userPower > 0
       ? userPower
@@ -526,13 +635,13 @@ export class SimulationEngine {
    */
   loadRoute(points: GPXPoint[]): void {
     this.route = [...points];
+    this.maxSpeedKmh = 0;
     this.hasRecordedRoutePower = this.route.some((point) =>
       typeof point.power === "number" && Number.isFinite(point.power) && point.power >= 0
     );
     this.activePowerSource = "none";
     this.state.currentIndex = DEFAULT_STATE.currentIndex;
     this.state.elapsedTime = DEFAULT_STATE.elapsedTime;
-    this.indexStepAccumulator = 0;
     this.lastActivityPointTimestampMs = 0;
     this.virtualActivity = this.createVirtualActivity(this.route);
     this.resetComparisonState();
@@ -557,7 +666,7 @@ export class SimulationEngine {
     this.state.playing = DEFAULT_STATE.playing;
     this.state.elapsedTime = DEFAULT_STATE.elapsedTime;
     this.state.currentIndex = DEFAULT_STATE.currentIndex;
-    this.indexStepAccumulator = 0;
+    this.maxSpeedKmh = 0;
     this.lastActivityPointTimestampMs = 0;
     this.resetVirtualActivityProgress();
     this.resetComparisonState();
@@ -653,36 +762,35 @@ export class SimulationEngine {
         ? calculateGradePercent({ currentPoint, nextPoint })
         : 0;
     const resolvedPower = this.resolvePower(userPower);
+    const recordedSpeedMs = this.getCurrentRecordedSpeedMs();
+    const playbackRate = clampSimulationSpeed(this.state.speed);
+    const simulatedDeltaSeconds = Math.max(0, deltaTime) * playbackRate;
     const targetSpeedMs = resolvedPower.power > 0
       ? estimateSpeedFromPower(resolvedPower.power, gradePercent, this.riderProfile)
-      : this.state.speed / 3.6;
-    const effectiveSpeedMs = Math.min(targetSpeedMs, getMaxSafeSpeedKmh() / 3.6);
+      : recordedSpeedMs;
+    const effectiveSpeedMs = Math.max(0, Math.min(targetSpeedMs, getMaxSafeSpeedKmh() / 3.6));
     const effectiveSpeedKmh = effectiveSpeedMs * 3.6;
+    const currentDistance = this.metrics.distance ?? currentPoint?.distance ?? 0;
+    const nextDistance = clampDistance(
+      this.route,
+      currentDistance + effectiveSpeedMs * simulatedDeltaSeconds,
+    );
 
     this.activePowerSource = resolvedPower.source;
-    this.state.speed = resolvedPower.power > 0 ? effectiveSpeedKmh : this.state.speed;
-    this.metrics.speed = resolvedPower.power > 0 ? effectiveSpeedKmh : this.state.speed;
+    this.metrics.speed = effectiveSpeedKmh;
+    this.maxSpeedKmh = Math.max(this.maxSpeedKmh, effectiveSpeedKmh);
     this.metrics.power = resolvedPower.power;
 
-    this.state.elapsedTime += deltaTime * this.state.speed;
+    this.state.elapsedTime += simulatedDeltaSeconds;
+    this.state.currentIndex = findRouteIndexForDistance(
+      this.route,
+      nextDistance,
+      this.state.currentIndex,
+    );
+    this.refreshMetrics(nextDistance);
 
-    this.indexStepAccumulator += deltaTime * this.state.speed;
-
-    const indexSteps = Math.floor(this.indexStepAccumulator);
-
-    if (indexSteps > 0) {
-      this.indexStepAccumulator -= indexSteps;
-
-      this.state.currentIndex = Math.min(
-        this.state.currentIndex + indexSteps,
-        this.route.length - 1
-      );
-
-      this.refreshMetrics();
-
-      if (this.state.currentIndex >= this.route.length - 1) {
-        this.state.playing = false;
-      }
+    if (nextDistance >= (this.route[this.route.length - 1]?.distance ?? 0)) {
+      this.state.playing = false;
     }
 
     this.appendActivityPoint();
@@ -707,7 +815,7 @@ export class SimulationEngine {
     this.state.playing = DEFAULT_STATE.playing;
     this.state.elapsedTime = DEFAULT_STATE.elapsedTime;
     this.state.currentIndex = DEFAULT_STATE.currentIndex;
-    this.indexStepAccumulator = 0;
+    this.maxSpeedKmh = 0;
     this.activePowerSource = "none";
     this.lastActivityPointTimestampMs = 0;
     this.resetVirtualActivityProgress();
@@ -727,11 +835,10 @@ export class SimulationEngine {
   }
 
   /**
-   * Get the maximum speed recorded so far in km/h
-   * For now, returns current speed as we don't track history
+   * Get the maximum speed reached during the current simulation in km/h.
    */
   getMaxSpeed(): number {
-    return this.metrics.speed ?? 0;
+    return this.maxSpeedKmh;
   }
 
   /**
@@ -745,7 +852,14 @@ export class SimulationEngine {
    * Get the remaining elevation gain in meters
    */
   getRemainingElevation(): number {
-    return calculateRemainingElevation(this.route, this.state.currentIndex);
+    return this.getRemainingElevationBreakdown().positive;
+  }
+
+  /**
+   * Get the remaining elevation split (ascent/descent) in meters
+   */
+  getRemainingElevationBreakdown(): RemainingElevationBreakdown {
+    return calculateRemainingElevationBreakdown(this.route, this.state.currentIndex);
   }
 
   /**
@@ -765,10 +879,15 @@ export class SimulationEngine {
     return calculateEstimatedArrivalDate(remainingSeconds);
   }
 
-  private refreshMetrics(): void {
+  private refreshMetrics(targetDistance = this.getCurrentPoint()?.distance ?? 0): void {
     const point = this.getCurrentPoint();
+    const interpolatedPoint = interpolateRoutePointAtDistance(
+      this.route,
+      targetDistance,
+      this.state.currentIndex,
+    );
 
-    if (!point) {
+    if (!point || !interpolatedPoint) {
       this.metrics.distance = 0;
       this.metrics.elevation = 0;
       this.syncVirtualActivityCurrentState();
@@ -780,8 +899,8 @@ export class SimulationEngine {
       return;
     }
 
-    this.metrics.distance = point.distance ?? 0;
-    this.metrics.elevation = point.elevation ?? 0;
+    this.metrics.distance = interpolatedPoint.distance ?? 0;
+    this.metrics.elevation = interpolatedPoint.elevation ?? 0;
     this.syncVirtualActivityCurrentState();
 
     const recordedSpeed = normalizeOptionalMetric(point.fitMetrics?.speed ?? point.speed);
@@ -891,14 +1010,19 @@ export class SimulationEngine {
       return;
     }
 
-    const point = this.getCurrentPoint();
+    const point = interpolateRoutePointAtDistance(
+      this.route,
+      this.metrics.distance ?? 0,
+      this.state.currentIndex,
+    );
+    const routePoint = this.getCurrentPoint();
     this.virtualActivity.currentState = {
       elapsedTime: this.state.elapsedTime,
       traveledDistance: this.metrics.distance,
       currentPosition: this.buildCurrentPosition(point),
       currentSpeed: this.metrics.speed,
       currentPower: this.metrics.power,
-      currentGradient: point?.gradient ?? 0,
+      currentGradient: point?.gradient ?? routePoint?.gradient ?? 0,
     };
   }
 

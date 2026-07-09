@@ -22,6 +22,7 @@ export type SimulationComparisonStats = ReturnType<SimulationEngine["getComparis
 export type VirtualActivityState = ReturnType<SimulationEngine["getVirtualActivity"]>;
 export type EstimatedFutureFitSizeBytes = ReturnType<SimulationEngine["getEstimatedFutureFitSizeBytes"]>;
 export type ActivitySummaryState = ReturnType<SimulationEngine["getActivitySummary"]>;
+export type RemainingElevationBreakdown = ReturnType<SimulationEngine["getRemainingElevationBreakdown"]>;
 export type FitValidationResult = Awaited<ReturnType<SimulationEngine["validateVirtualActivityFit"]>>;
 
 export interface FitExportResult {
@@ -113,6 +114,8 @@ export interface UseSimulationResult {
   remainingDistance: number;
 
   remainingElevation: number;
+
+  remainingElevationBreakdown: RemainingElevationBreakdown;
 
   remainingTime: number;
 
@@ -223,6 +226,9 @@ export function useSimulation(
   const [remainingElevation, setRemainingElevation] =
     useState<number>(engine.getRemainingElevation());
 
+  const [remainingElevationBreakdown, setRemainingElevationBreakdown] =
+    useState<RemainingElevationBreakdown>(engine.getRemainingElevationBreakdown());
+
   const [remainingTime, setRemainingTime] =
     useState<number>(engine.getRemainingTime());
 
@@ -276,6 +282,7 @@ export function useSimulation(
     setMaxSpeed(engine.getMaxSpeed());
     setRemainingDistance(engine.getRemainingDistance());
     setRemainingElevation(engine.getRemainingElevation());
+    setRemainingElevationBreakdown(engine.getRemainingElevationBreakdown());
     setRemainingTime(engine.getRemainingTime());
     setEstimatedArrival(engine.getEstimatedArrival());
     setRiderProfileState(engine.getRiderProfile());
@@ -467,6 +474,8 @@ export function useSimulation(
     remainingDistance,
 
     remainingElevation,
+
+    remainingElevationBreakdown,
 
     remainingTime,
 

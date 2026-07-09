@@ -51,52 +51,6 @@ function getStateLabel(state: AppSimulationState): string {
   }
 }
 
-function getCurrentRouteIndex(
-  route: GPXPoint[],
-  currentPoint: GPXPoint | null,
-): number {
-  if (!currentPoint) {
-    return -1;
-  }
-
-  const directIndex = route.indexOf(currentPoint);
-  if (directIndex >= 0) {
-    return directIndex;
-  }
-
-  return route.findIndex((point) =>
-    point.distance === currentPoint.distance &&
-    point.lat === currentPoint.lat &&
-    point.lon === currentPoint.lon,
-  );
-}
-
-function getRemainingElevationBreakdown(
-  route: GPXPoint[],
-  currentIndex: number,
-): { positive: number; negative: number } {
-  if (currentIndex < 0 || route.length === 0 || currentIndex >= route.length) {
-    return { positive: 0, negative: 0 };
-  }
-
-  let positive = 0;
-  let negative = 0;
-
-  for (let i = currentIndex; i < route.length - 1; i++) {
-    const currentElevation = route[i].elevation ?? 0;
-    const nextElevation = route[i + 1].elevation ?? 0;
-    const delta = nextElevation - currentElevation;
-
-    if (delta > 0) {
-      positive += delta;
-    } else if (delta < 0) {
-      negative += Math.abs(delta);
-    }
-  }
-
-  return { positive, negative };
-}
-
 export default function HomePage() {
   const [route, setRoute] = useState<GPXPoint[]>([]);
   const [isImporting, setIsImporting] = useState(false);
@@ -132,6 +86,7 @@ export default function HomePage() {
     averageSpeed,
     maxSpeed,
     remainingDistance,
+    remainingElevationBreakdown,
     remainingTime,
     estimatedArrival,
     play,
@@ -152,8 +107,12 @@ export default function HomePage() {
   }, [route, loadRoute]);
 
   const hasRoute = route.length > 0;
-  const currentRouteIndex = getCurrentRouteIndex(route, currentPoint);
-  const elevationBreakdown = getRemainingElevationBreakdown(route, currentRouteIndex);
+  const activityState = virtualActivity?.currentState;
+  const displayedElapsedTime = activityState?.elapsedTime ?? elapsedTime;
+  const displayedDistance = activityState?.traveledDistance ?? metrics.distance;
+  const displayedSpeed = activityState?.currentSpeed ?? metrics.speed;
+  const displayedPower = activityState?.currentPower ?? metrics.power;
+  const displayedElevation = activityState?.currentPosition?.altitude ?? metrics.elevation;
   const currentGradient = currentPoint?.gradient ?? 0;
 
   const appState: AppSimulationState = isImporting
@@ -173,12 +132,6 @@ export default function HomePage() {
   const canChangeSpeed = hasRoute && !isImporting;
   const canChangePower = hasRoute && !isImporting;
   const displayPowerMode = powerMode === "hybrid" ? "auto" : powerMode;
-  const activityState = virtualActivity?.currentState;
-  const displayedElapsedTime = activityState?.elapsedTime ?? elapsedTime;
-  const displayedDistance = activityState?.traveledDistance ?? metrics.distance;
-  const displayedSpeed = activityState?.currentSpeed ?? metrics.speed;
-  const displayedPower = activityState?.currentPower ?? metrics.power;
-  const displayedElevation = activityState?.currentPosition?.altitude ?? metrics.elevation;
   const recordedPointsCount = virtualActivity?.points.length ?? 0;
   const estimatedFutureFitSizeKb = estimatedFutureFitSizeBytes / 1024;
   const canExportFit = appState === "finished";
@@ -428,8 +381,8 @@ export default function HomePage() {
           maxSpeed={maxSpeed}
           remainingDistance={remainingDistance}
           currentGradient={currentGradient}
-          remainingPositiveElevation={elevationBreakdown.positive}
-          remainingNegativeElevation={elevationBreakdown.negative}
+          remainingPositiveElevation={remainingElevationBreakdown.positive}
+          remainingNegativeElevation={remainingElevationBreakdown.negative}
           remainingTime={remainingTime}
           estimatedArrival={estimatedArrival}
           currentCadence={recordedMetrics.cadence}
