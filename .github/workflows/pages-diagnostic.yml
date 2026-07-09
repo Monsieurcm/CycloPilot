@@ -1,0 +1,58 @@
+name: Pages Deployment Diagnostic
+
+on:
+  workflow_dispatch:
+    inputs:
+      google_maps_api_key:
+        description: "Diagnostic key value (non-empty placeholder allowed)"
+        required: false
+        type: string
+      google_maps_api_url:
+        description: "Optional explicit Google Maps API URL"
+        required: false
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/web/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/workflows/pages-diagnostic.yml"
+
+jobs:
+  build-diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Print non-sensitive env presence
+        run: |
+          echo "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY present: ${{ env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY != '' }}"
+          echo "NEXT_PUBLIC_GOOGLE_MAPS_API_URL present: ${{ env.NEXT_PUBLIC_GOOGLE_MAPS_API_URL != '' }}"
+        env:
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ inputs.google_maps_api_key || vars.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          NEXT_PUBLIC_GOOGLE_MAPS_API_URL: ${{ inputs.google_maps_api_url || vars.NEXT_PUBLIC_GOOGLE_MAPS_API_URL || secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_URL }}
+
+      - name: Build web app (diagnostic)
+        run: pnpm --filter @cyclopilot/web build
+        env:
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ inputs.google_maps_api_key || vars.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          NEXT_PUBLIC_GOOGLE_MAPS_API_URL: ${{ inputs.google_maps_api_url || vars.NEXT_PUBLIC_GOOGLE_MAPS_API_URL || secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_URL }}
